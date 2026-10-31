@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Monitoring;
 
 use App\Monitoring\Contracts\MonitoringDriver;
+use App\Monitoring\Contracts\PollingDriver;
 use App\Monitoring\Drivers\MockMonitoringDriver;
 use App\Monitoring\Drivers\SnmpMonitoringDriver;
 use App\Monitoring\Exceptions\DriverUnavailableException;
@@ -45,5 +46,21 @@ class MonitoringManager
             'mikrotik' => throw new DriverUnavailableException('The MikroTik RouterOS driver is not available yet. Use BANDWIDTH_MONITORING_DRIVER=snmp for real devices.'),
             default => throw new DriverUnavailableException('BANDWIDTH_MONITORING_DRIVER has an unknown value. Use mock or snmp.'),
         };
+    }
+
+    /**
+     * The active driver, provided it can poll. Like driver(), it never falls back.
+     *
+     * @throws DriverUnavailableException
+     */
+    public function pollingDriver(): PollingDriver
+    {
+        $driver = $this->driver();
+
+        if (! $driver instanceof PollingDriver) {
+            throw new DriverUnavailableException("The \"{$this->driverName()}\" driver cannot poll devices yet.");
+        }
+
+        return $driver;
     }
 }

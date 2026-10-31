@@ -1,0 +1,1484 @@
+﻿=== app\Monitoring\Contracts\MonitoringDriver.php ===
+<?php
+
+declare(strict_types=1);
+
+namespace App\Monitoring\Contracts;
+
+use App\Enums\DataSource;
+use App\Models\MonitoredDevice;
+use App\Monitoring\ConnectionTestResult;
+
+/**
+ * A source of monitoring data. Phase 3 adds polling and interface discovery to this
+ * contract; Phase 2 needs only the connection test.
+ *
+ * A driver must never fabricate a measurement for a real source, and must never
+ * fall back to another driver when it fails.
+ */
+interface MonitoringDriver
+{
+    public function source(): DataSource;
+
+    /**
+     * Test the single device it is given, using only that device's stored address.
+     */
+    public function testConnection(MonitoredDevice $device): ConnectionTestResult;
+}
+=== app\Monitoring\MonitoringManager.php ===
+<?php
+
+declare(strict_types=1);
+
+namespace App\Monitoring;
+
+use App\Monitoring\Contracts\MonitoringDriver;
+use App\Monitoring\Drivers\MockMonitoringDriver;
+use App\Monitoring\Drivers\SnmpMonitoringDriver;
+use App\Monitoring\Exceptions\DriverUnavailableException;
+use Illuminate\Contracts\Container\Container;
+
+/**
+ * Resolves the active driver from BANDWIDTH_MONITORING_DRIVER. There is deliberately
+ * no fallback: if the configured driver cannot be used, callers get an exception
+ * instead of silently receiving a different (e.g. simulated) driver.
+ */
+class MonitoringManager
+{
+    public function __construct(private readonly Container $container) {}
+
+    public function driverName(): string
+    {
+        return (string) config('campusnet.driver', 'mock');
+    }
+
+    public function isDemo(): bool
+    {
+        return $this->driverName() === 'mock';
+    }
+
+    public function isKnownDriver(): bool
+    {
+        return in_array($this->driverName(), (array) config('campusnet.drivers', []), true);
+    }
+
+    /**
+     * @throws DriverUnavailableException
+     */
+    public function driver(): MonitoringDriver
+    {
+        return match ($this->driverName()) {
+            'mock' => $this->container->make(MockMonitoringDriver::class),
+            'snmp' => $this->container->make(SnmpMonitoringDriver::class),
+            'mikrotik' => throw new DriverUnavailableException('The MikroTik RouterOS driver is not available yet. Use BANDWIDTH_MONITORING_DRIVER=snmp for real devices.'),
+            default => throw new DriverUnavailableException('BANDWIDTH_MONITORING_DRIVER has an unknown value. Use mock or snmp.'),
+        };
+    }
+}
+=== app\Monitoring\Drivers\MockMonitoringDriver.php ===
+<?php
+
+declare(strict_types=1);
+
+namespace App\Monitoring\Drivers;
+
+use App\Enums\DataSource;
+use App\Models\MonitoredDevice;
+use App\Monitoring\ConnectionTestResult;
+use App\Monitoring\Contracts\MonitoringDriver;
+
+/**
+ * Simulated driver for development and demonstrations. Everything it produces is
+ * labelled simulated; it never touches the network and never changes device status.
+ */
+class MockMonitoringDriver implements MonitoringDriver
+{
+    public function source(): DataSource
+    {
+        return DataSource::Mock;
+    }
+
+    public function testConnection(MonitoredDevice $device): ConnectionTestResult
+    {
+        return ConnectionTestResult::demo(
+            'DEMO MODE: this is a simulated check. No packet was sent to the device, so its status was not changed. '
+            .'Set BANDWIDTH_MONITORING_DRIVER=snmp to test real equipment.'
+        );
+    }
+}
+=== app\Monitoring\ConnectionTestResult.php ===
+<?php
+
+declare(strict_types=1);
+
+namespace App\Monitoring;
+
+use App\Enums\DeviceStatus;
+
+/**
+ * Outcome of testing one configured device.
+ *
+ * `status` is what the test learned about the device. It is null when the test could
+ * not be performed at all (extension missing, no credentials, simulated driver): in
+ * that case nothing is known about the device, so its stored status must not change.
+ */
+final readonly class ConnectionTestResult
+{
+    /**
+     * @param  array<string, scalar|null>  $details
+     */
+    public function __construct(
+        public bool $success,
+        public ?DeviceStatus $status,
+        public string $message,
+        public ?int $latencyMs = null,
+        public array $details = [],
+        public bool $simulated = false,
+    ) {}
+
+    /**
+     * @param  array<string, scalar|null>  $details
+     */
+    public static function reached(string $message, int $latencyMs, array $details = []): self
+    {
+        return new self(true, DeviceStatus::Online, $message, $latencyMs, $details);
+    }
+
+    /** The device was contacted (or could not be contacted) and monitoring is not possible. */
+    public static function unreachable(string $message): self
+    {
+        return new self(false, DeviceStatus::Unreachable, $message);
+    }
+
+    /** A setup problem prevented the test. Says nothing about the device itself. */
+    public static function notPerformed(string $message): self
+    {
+        return new self(false, null, $message);
+    }
+
+    /** Demo mode: no packet was sent. */
+    public static function demo(string $message): self
+    {
+        return new self(true, null, $message, null, [], true);
+    }
+
+    public function shouldPersist(): bool
+    {
+        return ! $this->simulated && $this->status !== null;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toArray(): array
+    {
+        return [
+            'success' => $this->success,
+            'status' => $this->status?->value,
+            'message' => $this->message,
+            'latency_ms' => $this->latencyMs,
+            'details' => $this->details,
+            'simulated' => $this->simulated,
+        ];
+    }
+}
+=== app\Support\Bandwidth.php ===
+<?php
+
+declare(strict_types=1);
+
+namespace App\Support;
+
+final class Bandwidth
+{
+    /**
+     * Utilization of the configured internet capacity, in percent.
+     *
+     * Internet links are full duplex, so the capacity applies to each direction
+     * separately; the busiest direction is what saturates the link. The value is
+     * not clamped at 100: a result above 100 means the capacity setting is lower
+     * than what the link actually carries, which an administrator should notice.
+     */
+    public static function utilizationPercent(float $inMbps, float $outMbps, float $capacityMbps): ?float
+    {
+        if ($capacityMbps <= 0) {
+            return null;
+        }
+
+        return round(max($inMbps, $outMbps, 0.0) / $capacityMbps * 100, 2);
+    }
+}
+=== app\Services\SettingsService.php ===
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services;
+
+use App\Models\MonitoringSetting;
+use App\Models\User;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
+
+/**
+ * Typed access to monitoring_settings with config('campusnet.defaults')
+ * as the fallback. The settings screen (a later phase) writes through put().
+ */
+class SettingsService
+{
+    private const CACHE_KEY = 'campusnet.settings';
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function all(): array
+    {
+        $defaults = (array) config('campusnet.defaults');
+
+        try {
+            $stored = Cache::remember(
+                self::CACHE_KEY,
+                now()->addMinutes(10),
+                fn (): array => MonitoringSetting::query()->pluck('value', 'key')->all(),
+            );
+        } catch (QueryException $e) {
+            // Table missing (migrations not run yet) or database down: fall back to
+            // config defaults so the login page still renders, and say why in the log.
+            Log::warning('Monitoring settings unavailable, using defaults.', [
+                'exception' => $e::class,
+            ]);
+
+            $stored = [];
+        }
+
+        $merged = $defaults;
+        foreach ($defaults as $key => $default) {
+            if (array_key_exists($key, $stored) && $stored[$key] !== null) {
+                $merged[$key] = $this->cast($stored[$key], $default);
+            }
+        }
+
+        return $merged;
+    }
+
+    public function get(string $key): mixed
+    {
+        $all = $this->all();
+
+        if (! array_key_exists($key, $all)) {
+            throw new InvalidArgumentException("Unknown setting [{$key}].");
+        }
+
+        return $all[$key];
+    }
+
+    public function put(string $key, mixed $value, ?User $by = null): void
+    {
+        if (! array_key_exists($key, (array) config('campusnet.defaults'))) {
+            throw new InvalidArgumentException("Unknown setting [{$key}].");
+        }
+
+        MonitoringSetting::updateOrCreate(
+            ['key' => $key],
+            ['value' => is_bool($value) ? (string) (int) $value : (string) $value, 'updated_by' => $by?->getKey()],
+        );
+
+        $this->flush();
+    }
+
+    public function flush(): void
+    {
+        Cache::forget(self::CACHE_KEY);
+    }
+
+    private function cast(string $stored, mixed $default): mixed
+    {
+        return match (true) {
+            is_int($default) => (int) $stored,
+            is_float($default) => (float) $stored,
+            is_bool($default) => (bool) (int) $stored,
+            default => $stored,
+        };
+    }
+}
+=== app\Services\MonitoredDeviceService.php ===
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services;
+
+use App\Models\MonitoredDevice;
+use App\Models\User;
+use App\Monitoring\ConnectionTestResult;
+use App\Monitoring\Exceptions\DriverUnavailableException;
+use App\Monitoring\MonitoringManager;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Throwable;
+
+/**
+ * Device lifecycle operations. Every change is written in a transaction together
+ * with its audit record; audit metadata never contains credential values.
+ */
+class MonitoredDeviceService
+{
+    public function __construct(
+        private readonly AuditLogger $audit,
+        private readonly MonitoringManager $monitoring,
+    ) {}
+
+    /**
+     * @param  array<string, mixed>  $data  validated attributes, optionally with `credentials`
+     */
+    public function create(array $data, User $actor): MonitoredDevice
+    {
+        return DB::transaction(function () use ($data, $actor): MonitoredDevice {
+            $device = new MonitoredDevice($data);
+            $device->save();
+            $device->refresh(); // load column defaults such as last_status = unknown
+
+            $this->audit->record('device.created', $device, [
+                'name' => $device->name,
+                'management_ip' => $device->management_ip,
+                'device_type' => $device->device_type->value,
+                'snmp_version' => $device->snmp_version->value,
+                'enabled' => $device->is_enabled,
+            ], "Device {$device->name} created.", $actor);
+
+            return $device;
+        });
+    }
+
+    /**
+     * @param  array<string, mixed>  $data  validated attributes; `credentials` only when replaced
+     */
+    public function update(MonitoredDevice $device, array $data, User $actor): MonitoredDevice
+    {
+        return DB::transaction(function () use ($device, $data, $actor): MonitoredDevice {
+            $device->fill($data);
+            $authChanged = array_key_exists('credentials', $data);
+
+            $changes = [];
+            foreach ($device->getDirty() as $field => $value) {
+                if (in_array($field, ['credentials', 'updated_at'], true)) {
+                    continue;
+                }
+
+                $changes[$field] = [
+                    'from' => $this->forAudit($device->getRawOriginal($field)),
+                    'to' => $this->forAudit($value),
+                ];
+            }
+
+            $device->save();
+
+            if ($changes !== [] || $authChanged) {
+                $this->audit->record('device.updated', $device, [
+                    'changes' => $changes,
+                    'snmp_auth_changed' => $authChanged,
+                ], "Device {$device->name} updated.", $actor);
+            }
+
+            return $device;
+        });
+    }
+
+    public function setEnabled(MonitoredDevice $device, bool $enabled, User $actor): MonitoredDevice
+    {
+        if ($device->is_enabled === $enabled) {
+            return $device;
+        }
+
+        return DB::transaction(function () use ($device, $enabled, $actor): MonitoredDevice {
+            $device->forceFill(['is_enabled' => $enabled])->save();
+
+            $this->audit->record(
+                $enabled ? 'device.enabled' : 'device.disabled',
+                $device,
+                ['name' => $device->name],
+                'Device '.$device->name.($enabled ? ' enabled.' : ' disabled.'),
+                $actor,
+            );
+
+            return $device;
+        });
+    }
+
+    /**
+     * Soft delete. Interfaces and traffic history are kept; the foreign keys restrict
+     * any hard delete while history exists.
+     */
+    public function archive(MonitoredDevice $device, User $actor): void
+    {
+        DB::transaction(function () use ($device, $actor): void {
+            $device->delete();
+
+            $this->audit->record('device.archived', $device, ['name' => $device->name], "Device {$device->name} archived.", $actor);
+        });
+    }
+
+    /**
+     * Test the device using only its stored address, with the active driver.
+     * The device's status is updated only when the test actually learned something.
+     */
+    public function testConnection(MonitoredDevice $device, User $actor): ConnectionTestResult
+    {
+        try {
+            $result = $this->monitoring->driver()->testConnection($device);
+        } catch (DriverUnavailableException $e) {
+            $result = ConnectionTestResult::notPerformed($e->getMessage());
+        } catch (Throwable $e) {
+            report($e);
+
+            $result = ConnectionTestResult::notPerformed('The connection test failed unexpectedly. Check the application log.');
+        }
+
+        if ($result->shouldPersist()) {
+            $device->forceFill([
+                'last_polled_at' => now(),
+                'last_status' => $result->status,
+                'last_successful_poll_at' => $result->success ? now() : $device->last_successful_poll_at,
+                'last_error' => $result->success ? null : Str::limit($result->message, 500, ''),
+            ])->save();
+        }
+
+        $this->audit->record('device.connection_tested', $device, [
+            'driver' => $this->monitoring->driverName(),
+            'success' => $result->success,
+            'status' => $result->status?->value,
+            'latency_ms' => $result->latencyMs,
+            'simulated' => $result->simulated,
+        ], "Connection test run for {$device->name}.", $actor);
+
+        return $result;
+    }
+
+    private function forAudit(mixed $value): mixed
+    {
+        return is_string($value) ? Str::limit($value, 200) : $value;
+    }
+}
+=== app\Providers\CampusNetServiceProvider.php ===
+<?php
+
+declare(strict_types=1);
+
+namespace App\Providers;
+
+use App\Enums\UserRole;
+use App\Models\User;
+use App\Services\AuditLogger;
+use App\Services\SettingsService;
+use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\ServiceProvider;
+
+class CampusNetServiceProvider extends ServiceProvider
+{
+    public function register(): void
+    {
+        $this->app->singleton(AuditLogger::class);
+        $this->app->singleton(SettingsService::class);
+    }
+
+    public function boot(): void
+    {
+        $this->registerPermissionGates();
+        $this->registerAuditListeners();
+    }
+
+    /**
+     * One gate per permission string. Authorize on the backend with
+     * `->middleware('can:devices.manage')` or `$this->authorize('devices.manage')`.
+     * Hiding a button in React is never the only protection.
+     */
+    private function registerPermissionGates(): void
+    {
+        foreach (UserRole::allPermissions() as $permission) {
+            Gate::define($permission, fn (User $user): bool => $user->hasPermission($permission));
+        }
+    }
+
+    private function registerAuditListeners(): void
+    {
+        Event::listen(Login::class, function (Login $event): void {
+            $user = $event->user;
+
+            if (! $user instanceof User) {
+                return;
+            }
+
+            $user->forceFill(['last_login_at' => now()])->saveQuietly();
+
+            app(AuditLogger::class)->record(
+                action: 'auth.login',
+                subject: $user,
+                description: 'User signed in.',
+                actor: $user,
+            );
+        });
+
+        Event::listen(Logout::class, function (Logout $event): void {
+            $user = $event->user;
+
+            if (! $user instanceof User) {
+                return;
+            }
+
+            app(AuditLogger::class)->record(
+                action: 'auth.logout',
+                subject: $user,
+                description: 'User signed out.',
+                actor: $user,
+            );
+        });
+
+        Event::listen(Failed::class, function (Failed $event): void {
+            // Only the attempted e-mail is recorded. The password is never read here.
+            app(AuditLogger::class)->record(
+                action: 'auth.login_failed',
+                subject: $event->user instanceof User ? $event->user : null,
+                metadata: ['email' => $event->credentials['email'] ?? null],
+                description: 'Failed sign-in attempt.',
+            );
+        });
+    }
+}
+=== app\Console\Commands\DemoDataCommand.php ===
+<?php
+
+declare(strict_types=1);
+
+namespace App\Console\Commands;
+
+use App\Enums\DeviceStatus;
+use App\Enums\DeviceType;
+use App\Enums\InterfaceRole;
+use App\Models\MonitoredDevice;
+use App\Models\NetworkAlert;
+use App\Models\NetworkInterface;
+use App\Models\TrafficSample;
+use App\Monitoring\MonitoringManager;
+use App\Services\AuditLogger;
+use App\Services\SettingsService;
+use App\Support\Bandwidth;
+use App\Support\DemoTraffic;
+use Carbon\CarbonImmutable;
+use DateTimeZone;
+use Generator;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
+
+/**
+ * Creates clearly simulated devices, interfaces and traffic so the dashboard can be
+ * demonstrated before real equipment is connected.
+ *
+ *   php artisan campusnet:demo-data            create (mock driver only)
+ *   php artisan campusnet:demo-data --purge    remove all demo data (any driver)
+ */
+class DemoDataCommand extends Command
+{
+    protected $signature = 'campusnet:demo-data
+        {--days=7 : Days of simulated history to create (1-30)}
+        {--purge : Remove all demo data instead of creating it}
+        {--force : Do not ask for confirmation when purging}';
+
+    protected $description = 'Create or remove simulated demo devices and traffic (demo mode only)';
+
+    /** Documentation addresses (RFC 5737): they can never be real equipment. */
+    private const DEVICES = [
+        [
+            'name' => 'DEMO Core Router', 'ip' => '192.0.2.1', 'type' => DeviceType::Router, 'vendor' => 'MikroTik',
+            'model' => 'CCR2004', 'location' => 'ICT Office', 'online' => true,
+            'interfaces' => [
+                ['index' => 1, 'name' => 'ether1-WAN', 'role' => InterfaceRole::Wan, 'weight' => 1.0],
+                ['index' => 2, 'name' => 'bridge-LAN', 'role' => InterfaceRole::Lan, 'weight' => 0.9],
+            ],
+        ],
+        [
+            'name' => 'DEMO Switch - Main Building', 'ip' => '192.0.2.2', 'type' => DeviceType::NetworkSwitch, 'vendor' => 'Cisco',
+            'model' => 'Catalyst 2960', 'location' => 'Main Building', 'online' => true,
+            'interfaces' => [
+                ['index' => 1, 'name' => 'Gi0/1 uplink', 'role' => InterfaceRole::Lan, 'weight' => 0.6],
+                ['index' => 2, 'name' => 'Gi0/2 computer lab', 'role' => InterfaceRole::Lan, 'weight' => 0.3],
+            ],
+        ],
+        [
+            'name' => 'DEMO Switch - Library', 'ip' => '192.0.2.3', 'type' => DeviceType::NetworkSwitch, 'vendor' => 'Cisco',
+            'model' => 'Catalyst 2960', 'location' => 'Library', 'online' => true,
+            'interfaces' => [
+                ['index' => 1, 'name' => 'Gi0/1 uplink', 'role' => InterfaceRole::Lan, 'weight' => 0.35],
+            ],
+        ],
+        [
+            'name' => 'DEMO AP - Library', 'ip' => '192.0.2.4', 'type' => DeviceType::AccessPoint, 'vendor' => 'Ubiquiti',
+            'model' => 'UniFi U6', 'location' => 'Library', 'online' => false,
+            'interfaces' => [
+                ['index' => 1, 'name' => 'Wi-Fi 5GHz', 'role' => InterfaceRole::Lan, 'weight' => 0.2],
+            ],
+        ],
+        [
+            'name' => 'DEMO AP - Science Building', 'ip' => '192.0.2.5', 'type' => DeviceType::AccessPoint, 'vendor' => 'Ubiquiti',
+            'model' => 'UniFi U6', 'location' => 'Science Building', 'online' => true,
+            'interfaces' => [
+                ['index' => 1, 'name' => 'Wi-Fi 5GHz', 'role' => InterfaceRole::Lan, 'weight' => 0.25],
+            ],
+        ],
+    ];
+
+    public function handle(MonitoringManager $monitoring, SettingsService $settings, AuditLogger $audit): int
+    {
+        if ($this->option('purge')) {
+            return $this->purge($audit);
+        }
+
+        if (! $monitoring->isDemo()) {
+            $this->error('Demo data can only be created while BANDWIDTH_MONITORING_DRIVER=mock. It is simulated and is never created for a real monitoring setup.');
+
+            return self::FAILURE;
+        }
+
+        if (MonitoredDevice::withTrashed()->where('is_demo', true)->exists()) {
+            $this->error('Demo data already exists. Run "php artisan campusnet:demo-data --purge" first to remove it.');
+
+            return self::FAILURE;
+        }
+
+        $days = (int) $this->option('days');
+
+        if ($days < 1 || $days > 30) {
+            $this->error('--days must be between 1 and 30.');
+
+            return self::FAILURE;
+        }
+
+        $capacity = (float) $settings->get('bandwidth_capacity_mbps');
+        $timezone = $this->timezone((string) $settings->get('timezone'));
+        $now = CarbonImmutable::now()->startOfMinute();
+        $counts = ['devices' => 0, 'interfaces' => 0, 'samples' => 0];
+
+        mt_srand(2026); // repeatable demo data
+
+        DB::transaction(function () use ($days, $capacity, $timezone, $now, &$counts): void {
+            foreach (self::DEVICES as $definition) {
+                $online = $definition['online'];
+                $lastSeen = $online ? $now : $now->subHours(3);
+
+                $device = new MonitoredDevice([
+                    'name' => $definition['name'],
+                    'management_ip' => $definition['ip'],
+                    'vendor' => $definition['vendor'],
+                    'model' => $definition['model'],
+                    'device_type' => $definition['type'],
+                    'location' => $definition['location'],
+                    'description' => 'Simulated device created by campusnet:demo-data.',
+                    'is_enabled' => true,
+                    'snmp_version' => 'v3',
+                    'snmp_port' => 161,
+                    'polling_interval_seconds' => 60,
+                ]);
+                $device->forceFill([
+                    'is_demo' => true,
+                    'last_status' => $online ? DeviceStatus::Online : DeviceStatus::Unreachable,
+                    'last_polled_at' => $lastSeen,
+                    'last_successful_poll_at' => $lastSeen,
+                    'last_error' => $online ? null : '[DEMO] Simulated outage: no response from the device.',
+                ])->save();
+                $counts['devices']++;
+
+                foreach ($definition['interfaces'] as $spec) {
+                    $interface = new NetworkInterface([
+                        'monitored_device_id' => $device->id,
+                        'if_index' => $spec['index'],
+                        'name' => $spec['name'],
+                        'role' => $spec['role'],
+                        'is_monitored' => true,
+                        'oper_status' => $online ? 'up' : null,
+                        'speed_mbps' => $spec['role'] === InterfaceRole::Wan ? (int) $capacity : 1000,
+                    ]);
+                    $interface->forceFill(['last_polled_at' => $lastSeen])->save();
+                    $counts['interfaces']++;
+
+                    $counts['samples'] += $this->createSamples(
+                        $device->id,
+                        $interface->id,
+                        $spec['role'],
+                        $spec['weight'],
+                        $capacity,
+                        $timezone,
+                        $now,
+                        $days,
+                        $online ? null : $lastSeen,
+                    );
+                }
+            }
+        });
+
+        $audit->record('demo.generated', null, $counts + ['days' => $days], 'Demo data generated.');
+
+        $this->info("Created {$counts['devices']} demo devices, {$counts['interfaces']} interfaces and {$counts['samples']} simulated samples.");
+        $this->line('All of it is marked simulated and shown under the DEMO MODE banner.');
+        $this->line('Demo samples age like any other data: after the stale-data window the dashboard says the collector is offline, which is true until real polling runs.');
+
+        return self::SUCCESS;
+    }
+
+    private function purge(AuditLogger $audit): int
+    {
+        $deviceIds = MonitoredDevice::withTrashed()->where('is_demo', true)->pluck('id');
+
+        if ($deviceIds->isEmpty()) {
+            $this->info('There is no demo data to remove.');
+
+            return self::SUCCESS;
+        }
+
+        if (! $this->option('force') && ! $this->confirm("Delete {$deviceIds->count()} demo devices with their interfaces, samples and alerts?")) {
+            $this->line('Nothing was deleted.');
+
+            return self::SUCCESS;
+        }
+
+        $counts = [];
+
+        DB::transaction(function () use ($deviceIds, &$counts): void {
+            $counts['samples'] = TrafficSample::whereIn('monitored_device_id', $deviceIds)->delete();
+            $counts['alerts'] = NetworkAlert::whereIn('monitored_device_id', $deviceIds)->delete();
+            $counts['interfaces'] = NetworkInterface::whereIn('monitored_device_id', $deviceIds)->delete();
+            $counts['devices'] = MonitoredDevice::withTrashed()->whereIn('id', $deviceIds)->forceDelete();
+        });
+
+        $audit->record('demo.purged', null, $counts, 'Demo data removed.');
+
+        $this->info("Removed {$counts['devices']} demo devices, {$counts['interfaces']} interfaces, {$counts['samples']} samples and {$counts['alerts']} alerts.");
+
+        return self::SUCCESS;
+    }
+
+    private function createSamples(
+        int $deviceId,
+        int $interfaceId,
+        InterfaceRole $role,
+        float $weight,
+        float $capacity,
+        string $timezone,
+        CarbonImmutable $now,
+        int $days,
+        ?CarbonImmutable $until,
+    ): int {
+        $rows = [];
+        $total = 0;
+
+        foreach ($this->timestamps($now, $days, $until) as [$at, $step]) {
+            [$in, $out] = $this->traffic($role, $weight, $capacity, $at->setTimezone($timezone));
+            $stamp = $at->utc()->format('Y-m-d H:i:s');
+
+            $rows[] = [
+                'monitored_device_id' => $deviceId,
+                'network_interface_id' => $interfaceId,
+                'sampled_at' => $stamp,
+                'in_octets' => null,
+                'out_octets' => null,
+                'in_mbps' => $in,
+                'out_mbps' => $out,
+                // Utilization is measured against the internet capacity, so only WAN rows carry it.
+                'utilization_percent' => $role === InterfaceRole::Wan ? Bandwidth::utilizationPercent($in, $out, $capacity) : null,
+                'elapsed_seconds' => $step,
+                'source' => 'mock',
+                'status' => 'ok',
+                'is_successful' => true,
+                'error_message' => null,
+                'created_at' => $stamp,
+            ];
+
+            if (count($rows) === 500) {
+                DB::table('traffic_samples')->insert($rows);
+                $total += count($rows);
+                $rows = [];
+            }
+        }
+
+        if ($rows !== []) {
+            DB::table('traffic_samples')->insert($rows);
+            $total += count($rows);
+        }
+
+        return $total;
+    }
+
+    /**
+     * Five-minute samples for the history, one-minute samples for the last two hours.
+     *
+     * @return Generator<int, array{0: CarbonImmutable, 1: int}>
+     */
+    private function timestamps(CarbonImmutable $now, int $days, ?CarbonImmutable $until): Generator
+    {
+        $cursor = $now->subDays($days);
+        $dense = $now->subHours(2);
+        $end = $until ?? $now;
+
+        while ($cursor <= $end) {
+            $step = $cursor < $dense ? 300 : 60;
+
+            yield [$cursor, $step];
+
+            $cursor = $cursor->addSeconds($step);
+        }
+    }
+
+    /**
+     * @return array{0: float, 1: float} inbound and outbound Mbps
+     */
+    private function traffic(InterfaceRole $role, float $weight, float $capacity, CarbonImmutable $local): array
+    {
+        $load = DemoTraffic::loadFactor((int) $local->format('G'), (int) $local->format('N'));
+        $noise = 0.85 + 0.30 * (mt_rand() / mt_getrandmax());
+        $ratio = mt_rand() / mt_getrandmax();
+
+        if ($role === InterfaceRole::Wan) {
+            $in = $capacity * (0.06 + 0.84 * $load) * $noise;
+            $out = $in * (0.22 + 0.15 * $ratio);
+        } else {
+            $in = $capacity * $weight * (0.02 + 0.40 * $load) * $noise;
+            $out = $in * (0.55 + 0.25 * $ratio);
+        }
+
+        return [round(min($in, $capacity * 1.2), 4), round(min($out, $capacity * 1.2), 4)];
+    }
+
+    private function timezone(string $name): string
+    {
+        return in_array($name, DateTimeZone::listIdentifiers(), true) ? $name : 'UTC';
+    }
+}
+=== app\Enums\DataSource.php ===
+<?php
+
+declare(strict_types=1);
+
+namespace App\Enums;
+
+enum DataSource: string
+{
+    case Mock = 'mock';
+    case Snmp = 'snmp';
+    case Mikrotik = 'mikrotik';
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::Mock => 'Simulated (demo)',
+            self::Snmp => 'SNMP',
+            self::Mikrotik => 'MikroTik RouterOS',
+        };
+    }
+
+    public function isSimulated(): bool
+    {
+        return $this === self::Mock;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function values(): array
+    {
+        return array_column(self::cases(), 'value');
+    }
+}
+=== app\Enums\SampleStatus.php ===
+<?php
+
+declare(strict_types=1);
+
+namespace App\Enums;
+
+enum SampleStatus: string
+{
+    /** Valid measurement with a computed rate. */
+    case Ok = 'ok';
+    /** First sample for an interface: counters stored, no rate can be computed yet. */
+    case Baseline = 'baseline';
+    /** Counter went backwards (device reboot or counter reset): rate not computed. */
+    case CounterReset = 'counter_reset';
+    /** The poll itself failed (timeout, auth error, unreachable). */
+    case Failed = 'failed';
+    /** Poll succeeded but the measurement was rejected (e.g. impossible rate). */
+    case Invalid = 'invalid';
+
+    public function hasValidRate(): bool
+    {
+        return $this === self::Ok;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function values(): array
+    {
+        return array_column(self::cases(), 'value');
+    }
+}
+=== app\Enums\DeviceStatus.php ===
+<?php
+
+declare(strict_types=1);
+
+namespace App\Enums;
+
+enum DeviceStatus: string
+{
+    /** Never polled successfully or failed â€” a device is never "online" by default. */
+    case Unknown = 'unknown';
+    case Online = 'online';
+    case Unreachable = 'unreachable';
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::Unknown => 'Unknown',
+            self::Online => 'Online',
+            self::Unreachable => 'Unreachable',
+        };
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function values(): array
+    {
+        return array_column(self::cases(), 'value');
+    }
+}
+=== app\Models\MonitoredDevice.php ===
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use App\Enums\DeviceStatus;
+use App\Enums\DeviceType;
+use App\Enums\SnmpVersion;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class MonitoredDevice extends Model
+{
+    use HasFactory;
+    use SoftDeletes;
+
+    protected $fillable = [
+        'name',
+        'management_ip',
+        'vendor',
+        'model',
+        'device_type',
+        'location',
+        'description',
+        'is_enabled',
+        'snmp_version',
+        'snmp_port',
+        'polling_interval_seconds',
+        'credentials',
+    ];
+
+    /**
+     * Credentials never leave the server: they are encrypted at rest and
+     * excluded from every array / JSON / Inertia serialization.
+     *
+     * @var list<string>
+     */
+    protected $hidden = ['credentials'];
+
+    protected function casts(): array
+    {
+        return [
+            'device_type' => DeviceType::class,
+            'snmp_version' => SnmpVersion::class,
+            'last_status' => DeviceStatus::class,
+            'is_enabled' => 'boolean',
+            'is_demo' => 'boolean',
+            'snmp_port' => 'integer',
+            'polling_interval_seconds' => 'integer',
+            'credentials' => 'encrypted:array',
+            'last_polled_at' => 'datetime',
+            'last_successful_poll_at' => 'datetime',
+        ];
+    }
+
+    public function interfaces(): HasMany
+    {
+        return $this->hasMany(NetworkInterface::class);
+    }
+
+    public function trafficSamples(): HasMany
+    {
+        return $this->hasMany(TrafficSample::class);
+    }
+
+    public function alerts(): HasMany
+    {
+        return $this->hasMany(NetworkAlert::class);
+    }
+
+    public function scopeEnabled(Builder $query): Builder
+    {
+        return $query->where('is_enabled', true);
+    }
+
+    /** Safe to show in the UI: tells whether credentials exist, never what they are. */
+    public function hasCredentials(): bool
+    {
+        return ! empty($this->credentials);
+    }
+}
+=== app\Models\NetworkInterface.php ===
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use App\Enums\InterfaceRole;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class NetworkInterface extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'monitored_device_id',
+        'if_index',
+        'name',
+        'description',
+        'role',
+        'is_monitored',
+        'oper_status',
+        'speed_mbps',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'role' => InterfaceRole::class,
+            'is_monitored' => 'boolean',
+            'if_index' => 'integer',
+            'speed_mbps' => 'integer',
+            'last_in_octets' => 'integer',
+            'last_out_octets' => 'integer',
+            'last_polled_at' => 'datetime',
+        ];
+    }
+
+    public function device(): BelongsTo
+    {
+        return $this->belongsTo(MonitoredDevice::class, 'monitored_device_id');
+    }
+
+    public function trafficSamples(): HasMany
+    {
+        return $this->hasMany(TrafficSample::class);
+    }
+
+    public function alerts(): HasMany
+    {
+        return $this->hasMany(NetworkAlert::class);
+    }
+
+    public function scopeMonitored(Builder $query): Builder
+    {
+        return $query->where('is_monitored', true);
+    }
+
+    public function scopeWan(Builder $query): Builder
+    {
+        return $query->where('role', InterfaceRole::Wan->value);
+    }
+}
+=== app\Models\TrafficSample.php ===
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use App\Enums\DataSource;
+use App\Enums\SampleStatus;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class TrafficSample extends Model
+{
+    use HasFactory;
+
+    public const UPDATED_AT = null;
+
+    protected $fillable = [
+        'monitored_device_id',
+        'network_interface_id',
+        'sampled_at',
+        'in_octets',
+        'out_octets',
+        'in_mbps',
+        'out_mbps',
+        'utilization_percent',
+        'elapsed_seconds',
+        'source',
+        'status',
+        'is_successful',
+        'error_message',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'sampled_at' => 'datetime',
+            'in_octets' => 'integer',
+            'out_octets' => 'integer',
+            // decimal:4 keeps the database precision when serialised.
+            'in_mbps' => 'decimal:4',
+            'out_mbps' => 'decimal:4',
+            'utilization_percent' => 'decimal:2',
+            'elapsed_seconds' => 'integer',
+            'source' => DataSource::class,
+            'status' => SampleStatus::class,
+            'is_successful' => 'boolean',
+        ];
+    }
+
+    public function device(): BelongsTo
+    {
+        return $this->belongsTo(MonitoredDevice::class, 'monitored_device_id');
+    }
+
+    public function networkInterface(): BelongsTo
+    {
+        return $this->belongsTo(NetworkInterface::class);
+    }
+
+    /** Only samples that carry a trustworthy rate (excludes baseline, resets, failures). */
+    public function scopeWithValidRate(Builder $query): Builder
+    {
+        return $query->where('status', SampleStatus::Ok->value);
+    }
+
+    public function scopeBetween(Builder $query, $from, $to): Builder
+    {
+        return $query->whereBetween('sampled_at', [$from, $to]);
+    }
+}
+=== app\Models\NetworkAlert.php ===
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use App\Enums\AlertSeverity;
+use App\Enums\AlertStatus;
+use App\Enums\AlertType;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class NetworkAlert extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'type',
+        'severity',
+        'status',
+        'title',
+        'description',
+        'monitored_device_id',
+        'network_interface_id',
+        'dedup_key',
+        'metadata',
+        'triggered_at',
+        'last_seen_at',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'type' => AlertType::class,
+            'severity' => AlertSeverity::class,
+            'status' => AlertStatus::class,
+            'metadata' => 'array',
+            'triggered_at' => 'datetime',
+            'last_seen_at' => 'datetime',
+            'acknowledged_at' => 'datetime',
+            'resolved_at' => 'datetime',
+        ];
+    }
+
+    public function device(): BelongsTo
+    {
+        return $this->belongsTo(MonitoredDevice::class, 'monitored_device_id');
+    }
+
+    public function networkInterface(): BelongsTo
+    {
+        return $this->belongsTo(NetworkInterface::class);
+    }
+
+    public function acknowledgedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'acknowledged_by');
+    }
+
+    public function resolvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'resolved_by');
+    }
+
+    /** Not yet resolved (active or acknowledged). */
+    public function scopeOpen(Builder $query): Builder
+    {
+        return $query->whereIn('status', [
+            AlertStatus::Active->value,
+            AlertStatus::Acknowledged->value,
+        ]);
+    }
+
+    public function scopeCritical(Builder $query): Builder
+    {
+        return $query->where('severity', AlertSeverity::Critical->value);
+    }
+}
+=== config\campusnet.php ===
+<?php
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Monitoring driver
+    |--------------------------------------------------------------------------
+    | mock     = simulated measurements, always shown with a DEMO MODE label.
+    | snmp     = real polling of explicitly configured devices (Phase 3).
+    | mikrotik = optional RouterOS API driver (Phase 3).
+    |
+    | The app never falls back from a real driver to mock data on failure.
+    */
+    'driver' => env('BANDWIDTH_MONITORING_DRIVER', 'mock'),
+
+    'drivers' => ['mock', 'snmp', 'mikrotik'],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default system settings
+    |--------------------------------------------------------------------------
+    | Used until an administrator saves a value in the monitoring_settings
+    | table. Thresholds are configurable defaults, not universal requirements.
+    */
+    'defaults' => [
+        'campus_name' => env('CAMPUSNET_CAMPUS_NAME', 'Campus'),
+        'bandwidth_capacity_mbps' => 100,
+        'monitoring_interval_seconds' => 60,
+        'warning_threshold_percent' => 80,
+        'critical_threshold_percent' => 90,
+        'polling_timeout_seconds' => 5,
+        'dashboard_refresh_seconds' => 30,
+        'stale_data_minutes' => 5,
+        'timezone' => 'Asia/Manila',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Retention (applied by a scheduled prune command in a later phase)
+    |--------------------------------------------------------------------------
+    */
+    'retention' => [
+        'traffic_samples_days' => (int) env('CAMPUSNET_RETAIN_SAMPLES_DAYS', 180),
+        'audit_logs_days' => (int) env('CAMPUSNET_RETAIN_AUDIT_DAYS', 365),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Audit log redaction
+    |--------------------------------------------------------------------------
+    | Any metadata key containing one of these fragments is replaced with
+    | [REDACTED] before it is written to audit_logs.
+    */
+    'redact_keys' => [
+        'password', 'secret', 'token', 'community', 'credential', 'passphrase',
+        'api_key', 'apikey', 'auth_key', 'priv_key', 'private',
+    ],
+];
+=== routes\campusnet.php ===
+<?php
+
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\MonitoredDeviceController;
+use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| CampusNet routes
+|--------------------------------------------------------------------------
+| Every route is behind authentication and a permission gate. The gates are defined
+| in CampusNetServiceProvider from the UserRole permission matrix.
+*/
+
+Route::middleware('auth')->group(function () {
+    Route::get('dashboard', [DashboardController::class, 'index'])
+        ->middleware('can:dashboard.view')
+        ->name('campusnet.dashboard');
+
+    Route::prefix('devices')->name('devices.')->controller(MonitoredDeviceController::class)->group(function () {
+        Route::get('/', 'index')->middleware('can:devices.view')->name('index');
+        Route::get('create', 'create')->middleware('can:devices.manage')->name('create');
+        Route::post('/', 'store')->middleware('can:devices.manage')->name('store');
+
+        Route::get('{device}', 'show')->whereNumber('device')->middleware('can:devices.view')->name('show');
+        Route::get('{device}/edit', 'edit')->whereNumber('device')->middleware('can:devices.manage')->name('edit');
+        Route::put('{device}', 'update')->whereNumber('device')->middleware('can:devices.manage')->name('update');
+        Route::delete('{device}', 'destroy')->whereNumber('device')->middleware('can:devices.manage')->name('destroy');
+        Route::patch('{device}/toggle', 'toggle')->whereNumber('device')->middleware('can:devices.manage')->name('toggle');
+
+        // At most 10 tests a minute per user, so the test cannot be used to hammer a device.
+        Route::post('{device}/test-connection', 'testConnection')
+            ->whereNumber('device')
+            ->middleware(['can:devices.manage', 'throttle:10,1'])
+            ->name('test-connection');
+    });
+});
+=== routes\console.php ===
+<?php
+
+use App\Models\TeamInvitation;
+use Illuminate\Support\Facades\Schedule;
+
+Schedule::call(function () {
+    TeamInvitation::query()
+        ->whereNotNull('expires_at')
+        ->where('expires_at', '<', now())
+        ->delete();
+})->daily()->description('Delete expired team invitations');
+=== migration columns ===
+2026_10_30_000001_add_role_and_status_to_users_table.php: $table->string('role', 32)->default('viewer')->index();
+2026_10_30_000001_add_role_and_status_to_users_table.php: $table->boolean('is_active')->default(true);
+2026_10_30_000001_add_role_and_status_to_users_table.php: $table->timestamp('last_login_at')->nullable();
+2026_10_30_000001_add_role_and_status_to_users_table.php: $table->dropIndex(['role']);
+2026_10_30_000001_add_role_and_status_to_users_table.php: $table->dropColumn(['role', 'is_active', 'last_login_at']);
+2026_10_30_000002_create_monitored_devices_table.php: $table->id();
+2026_10_30_000002_create_monitored_devices_table.php: $table->string('name', 120);
+2026_10_30_000002_create_monitored_devices_table.php: $table->string('management_ip', 45); // fits IPv6
+2026_10_30_000002_create_monitored_devices_table.php: $table->string('vendor', 80)->nullable();
+2026_10_30_000002_create_monitored_devices_table.php: $table->string('model', 80)->nullable();
+2026_10_30_000002_create_monitored_devices_table.php: $table->string('device_type', 24)->default('router');
+2026_10_30_000002_create_monitored_devices_table.php: $table->string('location', 120)->nullable();
+2026_10_30_000002_create_monitored_devices_table.php: $table->text('description')->nullable();
+2026_10_30_000002_create_monitored_devices_table.php: $table->boolean('is_enabled')->default(true);
+2026_10_30_000002_create_monitored_devices_table.php: $table->string('snmp_version', 8)->default('v3');
+2026_10_30_000002_create_monitored_devices_table.php: $table->unsignedSmallInteger('snmp_port')->default(161);
+2026_10_30_000002_create_monitored_devices_table.php: $table->unsignedInteger('polling_interval_seconds')->default(60);
+2026_10_30_000002_create_monitored_devices_table.php: $table->text('credentials')->nullable();
+2026_10_30_000002_create_monitored_devices_table.php: $table->timestamp('last_polled_at')->nullable();
+2026_10_30_000002_create_monitored_devices_table.php: $table->timestamp('last_successful_poll_at')->nullable();
+2026_10_30_000002_create_monitored_devices_table.php: $table->string('last_status', 16)->default('unknown');
+2026_10_30_000002_create_monitored_devices_table.php: $table->text('last_error')->nullable();
+2026_10_30_000002_create_monitored_devices_table.php: $table->timestamps();
+2026_10_30_000002_create_monitored_devices_table.php: $table->softDeletes();
+2026_10_30_000002_create_monitored_devices_table.php: $table->index('management_ip');
+2026_10_30_000002_create_monitored_devices_table.php: $table->index('location');
+2026_10_30_000002_create_monitored_devices_table.php: $table->index(['is_enabled', 'last_status']);
+2026_10_30_000003_create_network_interfaces_table.php: $table->id();
+2026_10_30_000003_create_network_interfaces_table.php: $table->foreignId('monitored_device_id')
+2026_10_30_000003_create_network_interfaces_table.php: $table->unsignedInteger('if_index');
+2026_10_30_000003_create_network_interfaces_table.php: $table->string('name', 120);
+2026_10_30_000003_create_network_interfaces_table.php: $table->string('description', 255)->nullable();
+2026_10_30_000003_create_network_interfaces_table.php: $table->string('role', 16)->default('other');
+2026_10_30_000003_create_network_interfaces_table.php: $table->boolean('is_monitored')->default(true);
+2026_10_30_000003_create_network_interfaces_table.php: $table->string('oper_status', 16)->nullable(); // up, down, testing, ...
+2026_10_30_000003_create_network_interfaces_table.php: $table->unsignedBigInteger('speed_mbps')->nullable();
+2026_10_30_000003_create_network_interfaces_table.php: $table->unsignedBigInteger('last_in_octets')->nullable();
+2026_10_30_000003_create_network_interfaces_table.php: $table->unsignedBigInteger('last_out_octets')->nullable();
+2026_10_30_000003_create_network_interfaces_table.php: $table->timestamp('last_polled_at')->nullable();
+2026_10_30_000003_create_network_interfaces_table.php: $table->timestamps();
+2026_10_30_000003_create_network_interfaces_table.php: $table->unique(['monitored_device_id', 'if_index']);
+2026_10_30_000003_create_network_interfaces_table.php: $table->index(['role', 'is_monitored']);
+2026_10_30_000004_create_traffic_samples_table.php: $table->id();
+2026_10_30_000004_create_traffic_samples_table.php: $table->foreignId('monitored_device_id')
+2026_10_30_000004_create_traffic_samples_table.php: $table->foreignId('network_interface_id')
+2026_10_30_000004_create_traffic_samples_table.php: $table->timestamp('sampled_at');
+2026_10_30_000004_create_traffic_samples_table.php: $table->unsignedBigInteger('in_octets')->nullable();
+2026_10_30_000004_create_traffic_samples_table.php: $table->unsignedBigInteger('out_octets')->nullable();
+2026_10_30_000004_create_traffic_samples_table.php: $table->decimal('in_mbps', 12, 4)->nullable();
+2026_10_30_000004_create_traffic_samples_table.php: $table->decimal('out_mbps', 12, 4)->nullable();
+2026_10_30_000004_create_traffic_samples_table.php: $table->decimal('utilization_percent', 7, 2)->nullable();
+2026_10_30_000004_create_traffic_samples_table.php: $table->unsignedInteger('elapsed_seconds')->nullable();
+2026_10_30_000004_create_traffic_samples_table.php: $table->string('source', 16);              // mock | snmp | mikrotik
+2026_10_30_000004_create_traffic_samples_table.php: $table->string('status', 16)->default('ok'); // ok | baseline | counter_reset | failed | invalid
+2026_10_30_000004_create_traffic_samples_table.php: $table->boolean('is_successful')->default(true);
+2026_10_30_000004_create_traffic_samples_table.php: $table->string('error_message', 255)->nullable();
+2026_10_30_000004_create_traffic_samples_table.php: $table->timestamp('created_at')->nullable();
+2026_10_30_000004_create_traffic_samples_table.php: $table->index(['network_interface_id', 'sampled_at']);
+2026_10_30_000004_create_traffic_samples_table.php: $table->index(['monitored_device_id', 'sampled_at']);
+2026_10_30_000004_create_traffic_samples_table.php: $table->index('sampled_at');
+2026_10_30_000004_create_traffic_samples_table.php: $table->index(['source', 'sampled_at']);
+2026_10_30_000005_create_network_alerts_table.php: $table->id();
+2026_10_30_000005_create_network_alerts_table.php: $table->string('type', 32);
+2026_10_30_000005_create_network_alerts_table.php: $table->string('severity', 16);
+2026_10_30_000005_create_network_alerts_table.php: $table->string('status', 16)->default('active');
+2026_10_30_000005_create_network_alerts_table.php: $table->string('title', 160);
+2026_10_30_000005_create_network_alerts_table.php: $table->text('description')->nullable();
+2026_10_30_000005_create_network_alerts_table.php: $table->foreignId('monitored_device_id')->nullable()
+2026_10_30_000005_create_network_alerts_table.php: $table->foreignId('network_interface_id')->nullable()
+2026_10_30_000005_create_network_alerts_table.php: $table->string('dedup_key', 120);
+2026_10_30_000005_create_network_alerts_table.php: $table->json('metadata')->nullable();
+2026_10_30_000005_create_network_alerts_table.php: $table->timestamp('triggered_at');
+2026_10_30_000005_create_network_alerts_table.php: $table->timestamp('last_seen_at')->nullable();
+2026_10_30_000005_create_network_alerts_table.php: $table->foreignId('acknowledged_by')->nullable()
+2026_10_30_000005_create_network_alerts_table.php: $table->timestamp('acknowledged_at')->nullable();
+2026_10_30_000005_create_network_alerts_table.php: $table->foreignId('resolved_by')->nullable()
+2026_10_30_000005_create_network_alerts_table.php: $table->timestamp('resolved_at')->nullable();
+2026_10_30_000005_create_network_alerts_table.php: $table->string('resolution_note', 255)->nullable();
+2026_10_30_000005_create_network_alerts_table.php: $table->timestamps();
+2026_10_30_000005_create_network_alerts_table.php: $table->index(['dedup_key', 'status']);
+2026_10_30_000005_create_network_alerts_table.php: $table->index(['status', 'severity']);
+2026_10_30_000005_create_network_alerts_table.php: $table->index('triggered_at');
+2026_10_30_000005_create_network_alerts_table.php: $table->index(['monitored_device_id', 'status']);
+2026_10_30_000006_create_monitoring_settings_table.php: $table->id();
+2026_10_30_000006_create_monitoring_settings_table.php: $table->string('key', 80)->unique();
+2026_10_30_000006_create_monitoring_settings_table.php: $table->text('value')->nullable();
+2026_10_30_000006_create_monitoring_settings_table.php: $table->foreignId('updated_by')->nullable()
+2026_10_30_000006_create_monitoring_settings_table.php: $table->timestamps();
+2026_10_30_000007_create_audit_logs_table.php: $table->id();
+2026_10_30_000007_create_audit_logs_table.php: $table->foreignId('user_id')->nullable()
+2026_10_30_000007_create_audit_logs_table.php: $table->string('actor_name', 120)->nullable();
+2026_10_30_000007_create_audit_logs_table.php: $table->string('action', 64);
+2026_10_30_000007_create_audit_logs_table.php: $table->string('subject_type', 120)->nullable();
+2026_10_30_000007_create_audit_logs_table.php: $table->unsignedBigInteger('subject_id')->nullable();
+2026_10_30_000007_create_audit_logs_table.php: $table->string('description', 255)->nullable();
+2026_10_30_000007_create_audit_logs_table.php: $table->json('metadata')->nullable();
+2026_10_30_000007_create_audit_logs_table.php: $table->string('ip_address', 45)->nullable();
+2026_10_30_000007_create_audit_logs_table.php: $table->string('user_agent', 255)->nullable();
+2026_10_30_000007_create_audit_logs_table.php: $table->timestamp('created_at')->useCurrent();
+2026_10_30_000007_create_audit_logs_table.php: $table->index('action');
+2026_10_30_000007_create_audit_logs_table.php: $table->index(['subject_type', 'subject_id']);
+2026_10_30_000007_create_audit_logs_table.php: $table->index(['user_id', 'created_at']);
+2026_10_30_000007_create_audit_logs_table.php: $table->index('created_at');
+2026_10_30_000008_add_is_demo_to_monitored_devices_table.php: $table->boolean('is_demo')->default(false);
+2026_10_30_000008_add_is_demo_to_monitored_devices_table.php: $table->index('is_demo');
+2026_10_30_000008_add_is_demo_to_monitored_devices_table.php: $table->dropIndex(['is_demo']);
+2026_10_30_000008_add_is_demo_to_monitored_devices_table.php: $table->dropColumn('is_demo');
