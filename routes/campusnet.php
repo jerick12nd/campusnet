@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MonitoredDeviceController;
+use App\Http\Controllers\TrafficHistoryController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,6 +17,10 @@ Route::middleware('auth')->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])
         ->middleware('can:dashboard.view')
         ->name('campusnet.dashboard');
+
+    Route::get('traffic-history', [TrafficHistoryController::class, 'index'])
+        ->middleware('can:traffic.view')
+        ->name('traffic-history.index');
 
     Route::prefix('devices')->name('devices.')->controller(MonitoredDeviceController::class)->group(function () {
         Route::get('/', 'index')->middleware('can:devices.view')->name('index');

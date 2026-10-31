@@ -14,3 +14,8 @@ Schedule::command('campusnet:poll')
     ->everyMinute()
     ->withoutOverlapping(5)
     ->description('Poll monitored devices that are due');
+
+Schedule::command('campusnet:prune')
+    ->dailyAt('03:00')
+    ->withoutOverlapping()
+    ->description('Delete data older than the retention settings');

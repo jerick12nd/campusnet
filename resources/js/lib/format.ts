@@ -111,3 +111,15 @@ export function rangeLabel(range: string): string {
         { '1h': 'Last hour', '24h': 'Last 24 hours', '7d': 'Last 7 days', '30d': 'Last 30 days' }[range] ?? range
     );
 }
+/** Data volume given in megabytes (decimal units, as network counters report them). */
+export function formatVolume(megabytes: number | null | undefined): string {
+    if (megabytes === null || megabytes === undefined || Number.isNaN(megabytes)) {
+        return '\u2014';
+    }
+
+    if (megabytes >= 1_000_000) {
+        return `${(megabytes / 1_000_000).toFixed(2)} TB`;
+    }
+
+    return megabytes >= 1000 ? `${(megabytes / 1000).toFixed(2)} GB` : `${megabytes.toFixed(1)} MB`;
+}

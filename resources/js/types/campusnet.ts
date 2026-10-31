@@ -172,3 +172,43 @@ export type DashboardData = {
         resolved_at: string | null;
     }[];
 };
+export type TrafficHistoryInterface = {
+    id: number;
+    name: string;
+    device: string | null;
+    role: string;
+    is_wan: boolean;
+};
+
+export type TrafficHistoryData = {
+    range: string;
+    ranges: string[];
+    from: string;
+    to: string;
+    from_date: string;
+    to_date: string;
+    bucket_seconds: number;
+    mode: { demo: boolean; driver: string };
+    thresholds: { warning: number; critical: number };
+    interfaces: TrafficHistoryInterface[];
+    selected: {
+        id: number;
+        name: string;
+        device: string | null;
+        role: string;
+        is_wan: boolean;
+        capacity_mbps: number | null;
+        capacity_basis: 'internet_capacity' | 'link_speed' | null;
+    } | null;
+    points: DashboardPoint[];
+    summary: {
+        avg_utilization_percent: number | null;
+        peak_utilization_percent: number | null;
+        avg_in_mbps: number;
+        avg_out_mbps: number;
+        peak_in_mbps: number;
+        peak_out_mbps: number;
+    } | null;
+    transferred: { in_mb: number; out_mb: number } | null;
+    quality: Record<string, number>;
+};
