@@ -52,17 +52,16 @@ type NavEntry = {
 // every request, so this list is a convenience, not security.
 const NAVIGATION: NavEntry[] = [
     { title: 'Dashboard', icon: LayoutDashboard, permission: 'dashboard.view', href: '/dashboard' },
-        { title: 'Network Devices', icon: Router, permission: 'devices.view', href: '/devices' },
-    { title: 'Interfaces', icon: Network, permission: 'interfaces.view', href: null, phase: 3 },
-    { title: 'Bandwidth Analytics', icon: Activity, permission: 'traffic.view', href: null, phase: 4 },
-        { title: 'Traffic History', icon: History, permission: 'traffic.view', href: '/traffic-history' },
+    { title: 'Network Devices', icon: Router, permission: 'devices.view', href: '/devices' },
+    { title: 'Interfaces', icon: Network, permission: 'interfaces.view', href: '/interfaces' },
+    { title: 'Bandwidth Analytics', icon: Activity, permission: 'traffic.view', href: '/bandwidth-analytics' },
+    { title: 'Traffic History', icon: History, permission: 'traffic.view', href: '/traffic-history' },
     { title: 'Alerts', icon: Bell, permission: 'alerts.view', href: null, phase: 5 },
     { title: 'Reports', icon: FileText, permission: 'reports.view', href: null, phase: 5 },
     { title: 'User Management', icon: Users, permission: 'users.manage', href: null, phase: 6 },
     { title: 'Audit Logs', icon: ScrollText, permission: 'audit.view', href: null, phase: 6 },
     { title: 'System Settings', icon: Settings, permission: 'settings.view', href: null, phase: 6 },
 ];
-
 export function AppSidebar() {
     const page = usePage<CampusNetShared>();
     const permissions = page.props.access?.permissions ?? [];
