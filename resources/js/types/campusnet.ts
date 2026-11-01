@@ -212,3 +212,70 @@ export type TrafficHistoryData = {
     transferred: { in_mb: number; out_mb: number } | null;
     quality: Record<string, number>;
 };
+export type InterfaceListRow = {
+    id: number;
+    if_index: number;
+    name: string;
+    description: string | null;
+    role: Option;
+    oper_status: string | null;
+    speed_mbps: number | null;
+    is_monitored: boolean;
+    last_polled_at: string | null;
+    device: { id: number; name: string; is_demo: boolean };
+    latest: { in_mbps: number; out_mbps: number; sampled_at: string } | null;
+};
+
+export type InterfaceFilters = {
+    search: string;
+    device: string;
+    role: string;
+    monitored: string;
+    status: string;
+};
+
+export type InterfaceStats = {
+    total: number;
+    monitored: number;
+    up: number;
+    down: number;
+};
+
+export type AnalyticsData = {
+    range: string;
+    ranges: string[];
+    days: number;
+    from: string;
+    to: string;
+    mode: { demo: boolean; driver: string };
+    capacity_mbps: number;
+    thresholds: { warning: number; critical: number };
+    wan: { configured: boolean; interfaces: number };
+    has_data: boolean;
+    summary: {
+        sample_count: number;
+        avg_utilization_percent: number;
+        previous_avg_utilization_percent: number | null;
+        p95_utilization_percent: number | null;
+        peak_utilization_percent: number | null;
+        peak_at: string | null;
+        above_warning_percent: number | null;
+        above_critical_percent: number | null;
+        transferred: { in_mb: number; out_mb: number };
+    } | null;
+    hourly: { hour: number; avg_utilization_percent: number | null }[];
+    weekday: { day: number; label: string; avg_utilization_percent: number | null }[];
+    daily: { date: string; in_mb: number; out_mb: number }[];
+    busiest: { hour: number | null; hour_avg: number | null; day: string | null; day_avg: number | null };
+    top_interfaces: {
+        id: number;
+        name: string;
+        device: string | null;
+        role: string | null;
+        in_mb: number;
+        out_mb: number;
+        total_mb: number;
+        avg_total_mbps: number;
+        peak_mbps: number;
+    }[];
+};

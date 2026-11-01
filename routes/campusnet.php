@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\BandwidthAnalyticsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MonitoredDeviceController;
+use App\Http\Controllers\NetworkInterfaceController;
 use App\Http\Controllers\TrafficHistoryController;
 use Illuminate\Support\Facades\Route;
 
@@ -21,6 +23,19 @@ Route::middleware('auth')->group(function () {
     Route::get('traffic-history', [TrafficHistoryController::class, 'index'])
         ->middleware('can:traffic.view')
         ->name('traffic-history.index');
+
+    Route::get('bandwidth-analytics', [BandwidthAnalyticsController::class, 'index'])
+        ->middleware('can:traffic.view')
+        ->name('bandwidth-analytics.index');
+
+    Route::get('interfaces', [NetworkInterfaceController::class, 'index'])
+        ->middleware('can:interfaces.view')
+        ->name('interfaces.index');
+
+    Route::patch('interfaces/{interface}', [NetworkInterfaceController::class, 'update'])
+        ->whereNumber('interface')
+        ->middleware('can:interfaces.manage')
+        ->name('interfaces.update');
 
     Route::prefix('devices')->name('devices.')->controller(MonitoredDeviceController::class)->group(function () {
         Route::get('/', 'index')->middleware('can:devices.view')->name('index');
