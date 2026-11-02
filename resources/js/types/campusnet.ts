@@ -279,3 +279,57 @@ export type AnalyticsData = {
         peak_mbps: number;
     }[];
 };
+export type AlertListRow = {
+    id: number;
+    type: Option;
+    severity: 'info' | 'warning' | 'critical';
+    status: 'active' | 'acknowledged' | 'resolved';
+    title: string;
+    description: string | null;
+    device: { id: number; name: string; is_demo: boolean } | null;
+    interface: string | null;
+    triggered_at: string;
+    last_seen_at: string | null;
+    acknowledged_at: string | null;
+    acknowledged_by: string | null;
+    resolved_at: string | null;
+    resolved_by: string | null;
+    resolution_note: string | null;
+    auto_resolved: boolean;
+};
+
+export type AlertFilters = {
+    status: string;
+    severity: string;
+    type: string;
+    device: string;
+    search: string;
+};
+
+export type AlertStats = {
+    open: number;
+    active: number;
+    acknowledged: number;
+    critical: number;
+    resolved_7d: number;
+};
+
+export type ReportTypeOption = {
+    value: string;
+    label: string;
+    description: string;
+};
+
+export type ReportData = {
+    type: string;
+    types: ReportTypeOption[];
+    from_date: string;
+    to_date: string;
+    timezone: string;
+    max_days: number;
+    mode: { demo: boolean; driver: string };
+    filename: string;
+    columns: string[];
+    rows: (string | number | null)[][];
+    total_rows: number;
+};

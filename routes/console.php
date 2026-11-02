@@ -15,6 +15,11 @@ Schedule::command('campusnet:poll')
     ->withoutOverlapping(5)
     ->description('Poll monitored devices that are due');
 
+Schedule::command('campusnet:evaluate-alerts')
+    ->everyMinute()
+    ->withoutOverlapping(5)
+    ->description('Raise and resolve alerts from the stored measurements');
+
 Schedule::command('campusnet:prune')
     ->dailyAt('03:00')
     ->withoutOverlapping()

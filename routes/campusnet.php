@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\AlertController;
 use App\Http\Controllers\BandwidthAnalyticsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MonitoredDeviceController;
 use App\Http\Controllers\NetworkInterfaceController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TrafficHistoryController;
 use Illuminate\Support\Facades\Route;
 
@@ -36,6 +38,29 @@ Route::middleware('auth')->group(function () {
         ->whereNumber('interface')
         ->middleware('can:interfaces.manage')
         ->name('interfaces.update');
+
+    Route::get('alerts', [AlertController::class, 'index'])
+        ->middleware('can:alerts.view')
+        ->name('alerts.index');
+
+    Route::patch('alerts/{alert}/acknowledge', [AlertController::class, 'acknowledge'])
+        ->whereNumber('alert')
+        ->middleware('can:alerts.manage')
+        ->name('alerts.acknowledge');
+
+    Route::patch('alerts/{alert}/resolve', [AlertController::class, 'resolve'])
+        ->whereNumber('alert')
+        ->middleware('can:alerts.manage')
+        ->name('alerts.resolve');
+
+    Route::get('reports', [ReportController::class, 'index'])
+        ->middleware('can:reports.view')
+        ->name('reports.index');
+
+    // At most 20 exports a minute per user.
+    Route::get('reports/download', [ReportController::class, 'download'])
+        ->middleware(['can:reports.export', 'throttle:20,1'])
+        ->name('reports.download');
 
     Route::prefix('devices')->name('devices.')->controller(MonitoredDeviceController::class)->group(function () {
         Route::get('/', 'index')->middleware('can:devices.view')->name('index');

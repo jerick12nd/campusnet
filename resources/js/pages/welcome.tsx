@@ -204,7 +204,7 @@ export default function Welcome() {
                                     />
                                 </g>
 
-                                <g className="text-[#F3BEC7] opacity-100 transition-all delay-400 duration-750 dark:text-[#4B0600] starting:opacity-0 motion-safe:starting:-translate-x-[26px]">
+                                <g className="text-[#F3BEC7] opacity-100 transition-all delay-400 duration-750 dark:text-[#4B0600] starting:opacity-0 motion-safe:starting:-translate-x-6.5">
                                     <mask
                                         id="path-2-mask"
                                         maskUnits="userSpaceOnUse"
@@ -246,7 +246,7 @@ export default function Welcome() {
                                     />
                                 </g>
 
-                                <g className="text-[#F8B803] opacity-100 mix-blend-color transition-all delay-400 duration-750 dark:text-[#391800] dark:mix-blend-hard-light starting:opacity-0 motion-safe:starting:-translate-x-[51px]">
+                                <g className="text-[#F8B803] opacity-100 mix-blend-color transition-all delay-400 duration-750 dark:text-[#391800] dark:mix-blend-hard-light starting:opacity-0 motion-safe:starting:-translate-x-12.75">
                                     <mask
                                         id="path-3-mask"
                                         maskUnits="userSpaceOnUse"
@@ -288,7 +288,7 @@ export default function Welcome() {
                                     />
                                 </g>
 
-                                <g className="text-[#F3BEC7] opacity-100 mix-blend-multiply transition-all delay-400 duration-750 dark:text-[#733000] dark:mix-blend-normal starting:opacity-0 motion-safe:starting:-translate-x-[78px]">
+                                <g className="text-[#F3BEC7] opacity-100 mix-blend-multiply transition-all delay-400 duration-750 dark:text-[#733000] dark:mix-blend-normal starting:opacity-0 motion-safe:starting:-translate-x-19.5">
                                     <mask
                                         id="path-4-mask"
                                         maskUnits="userSpaceOnUse"
@@ -330,7 +330,7 @@ export default function Welcome() {
                                     />
                                 </g>
 
-                                <g className="text-[#F3BEC7] opacity-100 mix-blend-hard-light transition-all delay-400 duration-750 dark:text-[#4B0600] starting:opacity-0 motion-safe:starting:-translate-x-[102px]">
+                                <g className="text-[#F3BEC7] opacity-100 mix-blend-hard-light transition-all delay-400 duration-750 dark:text-[#4B0600] starting:opacity-0 motion-safe:starting:-translate-x-25.5">
                                     <mask
                                         id="path-5-mask"
                                         maskUnits="userSpaceOnUse"
