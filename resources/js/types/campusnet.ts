@@ -333,3 +333,63 @@ export type ReportData = {
     rows: (string | number | null)[][];
     total_rows: number;
 };
+export type AuditLogRow = {
+    id: number;
+    created_at: string;
+    actor: string;
+    action: string;
+    description: string | null;
+    subject: string | null;
+    ip_address: string | null;
+    user_agent: string | null;
+    metadata: Record<string, unknown> | null;
+};
+
+export type AuditLogFilters = {
+    action: string;
+    search: string;
+    from: string;
+    to: string;
+};
+
+export type AuditLogStats = {
+    events_24h: number;
+    failed_logins_24h: number;
+    changes_24h: number;
+};
+
+export type SystemSettingsValues = {
+    campus_name: string;
+    timezone: string;
+    bandwidth_capacity_mbps: number;
+    warning_threshold_percent: number;
+    critical_threshold_percent: number;
+    dashboard_refresh_seconds: number;
+    stale_data_minutes: number;
+    monitoring_interval_seconds: number;
+    polling_timeout_seconds: number;
+};
+
+export type UserRow = {
+    id: number;
+    name: string;
+    email: string;
+    role: Option;
+    is_active: boolean;
+    last_login_at: string | null;
+    created_at: string | null;
+    is_self: boolean;
+};
+
+export type UserFilters = {
+    search: string;
+    role: string;
+    status: string;
+};
+
+export type UserStats = {
+    total: number;
+    active: number;
+    inactive: number;
+    super_admins: number;
+};

@@ -1,12 +1,15 @@
 <?php
 
 use App\Http\Controllers\AlertController;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BandwidthAnalyticsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MonitoredDeviceController;
 use App\Http\Controllers\NetworkInterfaceController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\TrafficHistoryController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -61,6 +64,28 @@ Route::middleware('auth')->group(function () {
     Route::get('reports/download', [ReportController::class, 'download'])
         ->middleware(['can:reports.export', 'throttle:20,1'])
         ->name('reports.download');
+
+    // /settings/* belongs to the starter kit (profile, security, teams), so CampusNet settings live elsewhere.
+    Route::get('system-settings', [SystemSettingsController::class, 'edit'])
+        ->middleware('can:settings.view')
+        ->name('system-settings.edit');
+
+    Route::patch('system-settings', [SystemSettingsController::class, 'update'])
+        ->middleware('can:settings.manage')
+        ->name('system-settings.update');
+
+    Route::get('users', [UserController::class, 'index'])
+        ->middleware('can:users.manage')
+        ->name('users.index');
+
+    Route::patch('users/{user}', [UserController::class, 'update'])
+        ->whereNumber('user')
+        ->middleware('can:users.manage')
+        ->name('users.update');
+
+    Route::get('audit-logs', [AuditLogController::class, 'index'])
+        ->middleware('can:audit.view')
+        ->name('audit-logs.index');
 
     Route::prefix('devices')->name('devices.')->controller(MonitoredDeviceController::class)->group(function () {
         Route::get('/', 'index')->middleware('can:devices.view')->name('index');

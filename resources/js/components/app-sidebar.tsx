@@ -58,9 +58,9 @@ const NAVIGATION: NavEntry[] = [
     { title: 'Traffic History', icon: History, permission: 'traffic.view', href: '/traffic-history' },
     { title: 'Alerts', icon: Bell, permission: 'alerts.view', href: '/alerts' },
     { title: 'Reports', icon: FileText, permission: 'reports.view', href: '/reports' },
-    { title: 'User Management', icon: Users, permission: 'users.manage', href: null, phase: 6 },
-    { title: 'Audit Logs', icon: ScrollText, permission: 'audit.view', href: null, phase: 6 },
-    { title: 'System Settings', icon: Settings, permission: 'settings.view', href: null, phase: 6 },
+    { title: 'User Management', icon: Users, permission: 'users.manage', href: '/users' },
+    { title: 'Audit Logs', icon: ScrollText, permission: 'audit.view', href: '/audit-logs' },
+    { title: 'System Settings', icon: Settings, permission: 'settings.view', href: '/system-settings' },
 ];
 
 export function AppSidebar() {
