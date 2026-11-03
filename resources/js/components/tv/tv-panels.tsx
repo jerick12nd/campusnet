@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, CircleAlert, CircleCheck, CircleHelp, CircleX, Info, Network, TriangleAlert } from 'lucide-react';
+import { ArrowDown, ArrowUp, CircleAlert, CircleCheck, CircleHelp, CircleX, Info, TriangleAlert } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { useNow, useRotatingPage, type Connection } from '@/hooks/use-tv-data';
@@ -114,11 +114,9 @@ export function TvHeader({
     return (
         <header className="flex shrink-0 items-center justify-between gap-6">
             <div className="flex items-center gap-4">
-                <div className="flex size-[4rem] items-center justify-center rounded-[1.2rem] bg-sky-500/90 shadow-lg">
-                    <Network className="size-[2.2rem]" aria-hidden="true" />
-                </div>
+                <img src="/images/dssc-seal.png" alt="" className="size-[4.5rem] shrink-0 object-contain" />
                 <div>
-                    <div className="text-[2.2rem] leading-tight font-semibold">CampusNet</div>
+                    <div className="text-[2.2rem] leading-tight font-semibold">DSSC CAMPUSNET</div>
                     <div className="text-[1.2rem] text-white/70">{campusName}</div>
                 </div>
             </div>
@@ -174,7 +172,7 @@ export function StatusBanner({
                 <a href="/login" className="underline">
                     Sign in
                 </a>{' '}
-                or ask a Super Administrator for a new pairing link.
+                or ask a Super Administrator for a new pairing code.
             </>
         );
     } else if (connection === 'retrying') {
@@ -375,12 +373,32 @@ const SEVERITY: Record<Severity, { text: string; cls: string; Icon: typeof Circl
     info: { text: 'Info', cls: 'text-sky-300', Icon: Info },
 };
 
+const SEVERITY_RANK: Record<Severity, number> = { info: 1, warning: 2, critical: 3 };
+
 function Count({ label, value, tone }: { label: string; value: number; tone: string }) {
     return (
         <div className="rounded-[1rem] bg-white/[0.06] px-3 py-2 text-center">
             <div className={cn('text-[2rem] leading-none font-semibold tabular-nums', value > 0 && tone)}>{value}</div>
             <div className="mt-1 text-[0.85rem] text-white/60">{label}</div>
         </div>
+    );
+}
+
+function AlertRow({ alert, now }: { alert: TvAlert; now: number }) {
+    const severity = SEVERITY[alert.severity];
+
+    return (
+        <li className="flex items-start gap-3 text-[1.1rem]">
+            <severity.Icon className={cn('mt-1 size-[1.3rem] shrink-0', severity.cls)} aria-hidden="true" />
+            <div className="min-w-0 flex-1">
+                <div className="truncate font-semibold">
+                    <span className={severity.cls}>{severity.text}</span> · {alert.title}
+                </div>
+                <div className="truncate text-[0.95rem] text-white/60">
+                    {alert.device ?? 'Network-wide'} · {ageText(alert.triggered_at, now)}
+                </div>
+            </div>
+        </li>
     );
 }
 
@@ -413,26 +431,6 @@ export function AlertsPanel({ data, skewMs }: { data: TvData; skewMs: number }) 
                 </ul>
             )}
         </Glass>
-    );
-}
-
-const SEVERITY_RANK: Record<Severity, number> = { info: 1, warning: 2, critical: 3 };
-
-function AlertRow({ alert, now }: { alert: TvAlert; now: number }) {
-    const severity = SEVERITY[alert.severity];
-
-    return (
-        <li className="flex items-start gap-3 text-[1.1rem]">
-            <severity.Icon className={cn('mt-1 size-[1.3rem] shrink-0', severity.cls)} aria-hidden="true" />
-            <div className="min-w-0 flex-1">
-                <div className="truncate font-semibold">
-                    <span className={severity.cls}>{severity.text}</span> · {alert.title}
-                </div>
-                <div className="truncate text-[0.95rem] text-white/60">
-                    {alert.device ?? 'Network-wide'} · {ageText(alert.triggered_at, now)}
-                </div>
-            </div>
-        </li>
     );
 }
 
