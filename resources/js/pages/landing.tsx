@@ -91,7 +91,7 @@ export default function Landing() {
 
                 <main id="main">
                     <section className="relative overflow-hidden border-b border-white/10">
-                        <div className="pointer-events-none absolute inset-0 -z-0 bg-[radial-gradient(60%_50%_at_50%_0%,rgba(16,185,129,0.18),transparent)]" aria-hidden="true" />
+                        <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(60%_50%_at_50%_0%,rgba(16,185,129,0.18),transparent)]" aria-hidden="true" />
                         <div className="relative mx-auto max-w-6xl px-4 py-20 md:py-28">
                             <div className="mb-6 flex items-center gap-4">
                                 <img src="/images/dssc-seal.png" alt="Seal of Davao del Sur State College" width={96} height={96} className="size-20 md:size-24" />
@@ -126,7 +126,7 @@ export default function Landing() {
 
                         <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             {MODULES.map(({ title, text, icon: Icon }) => (
-                                <li key={title} className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
+                                <li key={title} className="rounded-xl border border-white/10 bg-white/3 p-5">
                                     <Icon className="mb-3 size-5 text-emerald-400" aria-hidden="true" />
                                     <h3 className="font-medium">{title}</h3>
                                     <p className="mt-1.5 text-sm text-neutral-300">{text}</p>
@@ -151,7 +151,7 @@ export default function Landing() {
                         </section>
                     )}
 
-                    <section id="roles" aria-labelledby="roles-title" className="border-y border-white/10 bg-white/[0.02]">
+                    <section id="roles" aria-labelledby="roles-title" className="border-y border-white/10 bg-white/2">
                         <div className="mx-auto max-w-6xl px-4 py-16">
                             <h2 id="roles-title" className="text-2xl font-semibold tracking-tight md:text-3xl">The right access for each person</h2>
                             <ul className="mt-8 grid gap-4 md:grid-cols-3">
@@ -183,7 +183,7 @@ export default function Landing() {
                         </ul>
                     </section>
 
-                    <section id="status" aria-labelledby="status-title" className="border-t border-white/10 bg-white/[0.02]">
+                    <section id="status" aria-labelledby="status-title" className="border-t border-white/10 bg-white/2">
                         <div className="mx-auto max-w-6xl px-4 py-16">
                             <h2 id="status-title" className="text-2xl font-semibold tracking-tight md:text-3xl">Where it stands</h2>
                             <div className="mt-6 grid gap-4 md:grid-cols-2">
