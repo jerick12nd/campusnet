@@ -15,8 +15,14 @@ use Inertia\Response;
 
 class TvDisplayAdminController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request, TvDisplayService $displays): Response
     {
+        // First visit and nothing exists yet: create a default display with a reusable code,
+        // so the code is already waiting here. Revoked displays still count, so this never recreates one you removed.
+        if (TvDisplay::query()->doesntExist()) {
+            $displays->create('Default TV Display', $request->user(), true);
+        }
+
         return Inertia::render('tv-displays/index', [
             'displays' => TvDisplay::query()->latest()->get()->map(fn (TvDisplay $display): array => [
                 'id' => $display->id,
