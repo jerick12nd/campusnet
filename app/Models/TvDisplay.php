@@ -11,11 +11,12 @@ class TvDisplay extends Model
 {
     protected $fillable = ['name', 'created_by'];
 
-    protected $hidden = ['pairing_hash', 'token_hash'];
+    protected $hidden = ['pairing_hash', 'pairing_code', 'token_hash'];
 
     protected function casts(): array
     {
         return [
+            'is_reusable' => 'boolean',
             'pairing_expires_at' => 'datetime',
             'paired_at' => 'datetime',
             'last_seen_at' => 'datetime',
@@ -28,12 +29,13 @@ class TvDisplay extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    /** revoked | paired | waiting (link not used yet) | expired (link unused and too old) */
+    /** revoked | paired | waiting (code not used yet, or reusable) | expired (one-time code unused and too old) */
     public function status(): string
     {
         return match (true) {
             $this->revoked_at !== null => 'revoked',
             $this->token_hash !== null => 'paired',
+            $this->is_reusable => 'waiting',
             $this->pairing_expires_at?->isFuture() === true => 'waiting',
             default => 'expired',
         };

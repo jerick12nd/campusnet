@@ -6,8 +6,10 @@ namespace App\Http\Controllers;
 
 use App\Models\TvDisplay;
 use App\Services\TvDisplayService;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -20,6 +22,9 @@ class TvDisplayAdminController extends Controller
                 'id' => $display->id,
                 'name' => $display->name,
                 'status' => $display->status(),
+                'reusable' => $display->is_reusable,
+                // Only a Super Administrator reaches this page, and only reusable codes can be shown again.
+                'code' => $this->visibleCode($display),
                 'paired_at' => $display->paired_at?->toIso8601String(),
                 'last_seen_at' => $display->last_seen_at?->toIso8601String(),
             ])->all(),
@@ -30,14 +35,20 @@ class TvDisplayAdminController extends Controller
 
     public function store(Request $request, TvDisplayService $displays): RedirectResponse
     {
-        $data = $request->validate(['name' => ['required', 'string', 'max:80']]);
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:80'],
+            'reusable' => ['sometimes', 'boolean'],
+        ]);
 
-        ['display' => $display, 'code' => $code] = $displays->create($data['name'], $request->user());
+        $reusable = $request->boolean('reusable');
+
+        ['display' => $display, 'code' => $code] = $displays->create($data['name'], $request->user(), $reusable);
 
         return to_route('tv-displays.index')->with('tv_pairing', [
             'name' => $display->name,
             'code' => $code,
-            'expires_at' => $display->pairing_expires_at->toIso8601String(),
+            'reusable' => $reusable,
+            'expires_at' => $display->pairing_expires_at?->toIso8601String(),
         ]);
     }
 
@@ -46,5 +57,18 @@ class TvDisplayAdminController extends Controller
         $displays->revoke($display, $request->user());
 
         return back()->with('success', "Display {$display->name} was revoked. It stops receiving data immediately.");
+    }
+
+    private function visibleCode(TvDisplay $display): ?string
+    {
+        if (! $display->is_reusable || $display->revoked_at !== null || $display->pairing_code === null) {
+            return null;
+        }
+
+        try {
+            return Crypt::decryptString($display->pairing_code);
+        } catch (DecryptException) {
+            return null;
+        }
     }
 }
