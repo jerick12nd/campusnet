@@ -13,11 +13,9 @@ import {
     type LucideIcon,
 } from 'lucide-react';
 
-import { NavUser } from '@/components/nav-user';
 import {
     Sidebar,
     SidebarContent,
-    SidebarFooter,
     SidebarGroup,
     SidebarGroupLabel,
     SidebarHeader,
@@ -132,10 +130,6 @@ export function AppSidebar() {
                     </SidebarMenu>
                 </SidebarGroup>
             </SidebarContent>
-
-            <SidebarFooter>
-                <NavUser />
-            </SidebarFooter>
         </Sidebar>
     );
 }
