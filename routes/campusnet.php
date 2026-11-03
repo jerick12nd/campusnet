@@ -26,10 +26,13 @@ use Illuminate\Support\Facades\Route;
 */
 
 // TV wallboard: a signed-in user with tv-display.view, or a paired display (cookie) may view it.
-Route::get('tv-display/pair/{code}', [TvDisplayPairingController::class, 'redeem'])
-    ->where('code', '[A-Za-z0-9]{40}')
-    ->middleware('throttle:10,1')
+// The pairing screen is public (a TV cannot sign in) and only accepts a valid one-time code.
+Route::get('tv-display/pair', [TvDisplayPairingController::class, 'show'])
     ->name('tv-display.pair');
+
+Route::post('tv-display/pair', [TvDisplayPairingController::class, 'redeem'])
+    ->middleware('throttle:5,1')
+    ->name('tv-display.pair.store');
 
 Route::middleware(EnsureTvDisplayAccess::class)->group(function () {
     Route::get('tv-display', [TvDisplayController::class, 'show'])->name('tv-display.show');

@@ -89,18 +89,23 @@ final class DashboardService
     }
 
     /**
+     * Devices that belong to the active monitoring source. Public so the TV display
+     * applies exactly the same demo/real filtering as the dashboard.
+     *
      * @return Builder<MonitoredDevice>
      */
-    private function deviceQuery(string $source): Builder
+    public function deviceQuery(string $source): Builder
     {
         return MonitoredDevice::query()
             ->when($source !== 'mock', fn (Builder $query) => $query->where('is_demo', false));
     }
 
     /**
+     * Alerts that belong to the active monitoring source. Public for the same reason.
+     *
      * @return Builder<NetworkAlert>
      */
-    private function alertQuery(string $source): Builder
+    public function alertQuery(string $source): Builder
     {
         return NetworkAlert::query()->where(function (Builder $query) use ($source): void {
             $query->whereNull('monitored_device_id')

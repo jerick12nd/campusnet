@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\TvDisplay;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 final class TvDisplayService
@@ -17,20 +18,22 @@ final class TvDisplayService
 
     public const COOKIE_MINUTES = 60 * 24 * 365;
 
+    public const CODE_LENGTH = 8;
+
     public function __construct(private readonly AuditLogger $audit) {}
 
     /**
-     * Create a display and a single-use pairing code. The code is returned once and never stored.
+     * Create a display and a single-use numeric pairing code. The code is returned once and never stored.
      *
      * @return array{display: TvDisplay, code: string}
      */
     public function create(string $name, User $actor): array
     {
-        $code = Str::random(40);
+        $code = $this->newCode();
 
         $display = new TvDisplay(['name' => $name, 'created_by' => $actor->id]);
         $display->forceFill([
-            'pairing_hash' => hash('sha256', $code),
+            'pairing_hash' => $this->hashCode($code),
             'pairing_expires_at' => now()->addMinutes(self::PAIRING_MINUTES),
         ])->save();
 
@@ -44,11 +47,18 @@ final class TvDisplayService
      *
      * @return array{display: TvDisplay, token: string}|null
      */
-    public function redeem(string $code, ?string $ip): ?array
+    public function redeem(string $input, ?string $ip): ?array
     {
-        return DB::transaction(function () use ($code, $ip): ?array {
+        // Accept "1234 5678", "1234-5678" and "12345678".
+        $code = preg_replace('/\D+/', '', $input) ?? '';
+
+        if (strlen($code) !== self::CODE_LENGTH) {
+            return null;
+        }
+
+        $paired = DB::transaction(function () use ($code, $ip): ?array {
             $display = TvDisplay::query()
-                ->where('pairing_hash', hash('sha256', $code))
+                ->where('pairing_hash', $this->hashCode($code))
                 ->whereNull('revoked_at')
                 ->where('pairing_expires_at', '>', now())
                 ->lockForUpdate()
@@ -73,6 +83,13 @@ final class TvDisplayService
 
             return ['display' => $display, 'token' => $token];
         });
+
+        if ($paired === null) {
+            // The attempted code is never logged, only that a wrong one was tried.
+            Log::warning('TV display pairing code rejected', ['ip' => $ip]);
+        }
+
+        return $paired;
     }
 
     public function authenticate(string $token): ?TvDisplay
@@ -100,5 +117,21 @@ final class TvDisplayService
         ])->save();
 
         $this->audit->record('tv_display.revoked', $display, [], "Revoked TV display {$display->name}", $actor);
+    }
+
+    /** Random 8-digit code that no other unused code is using. */
+    private function newCode(): string
+    {
+        do {
+            $code = str_pad((string) random_int(0, 99_999_999), self::CODE_LENGTH, '0', STR_PAD_LEFT);
+        } while (TvDisplay::query()->where('pairing_hash', $this->hashCode($code))->exists());
+
+        return $code;
+    }
+
+    /** Keyed hash: a short numeric code cannot be brute-forced offline without APP_KEY. */
+    private function hashCode(string $code): string
+    {
+        return hash_hmac('sha256', $code, (string) config('app.key'));
     }
 }

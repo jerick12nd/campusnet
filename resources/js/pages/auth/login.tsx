@@ -16,7 +16,14 @@ import PasskeyVerify from '@/components/passkey-verify';
 /* @end-chisel-passkeys */
 import type { TeamInvitationContext } from '@/types';
 import type { CampusNetShared } from '@/types/campusnet';
+import { Link } from '@inertiajs/react'; // dili na i-add kung naa na sa imports
 
+<div className="text-center text-sm text-muted-foreground">
+    Setting up a wall display?{' '}
+    <Link href="/tv-display/pair" className="underline underline-offset-4">
+        TV Display
+    </Link>
+</div>
 type Props = {
     status?: string;
     canResetPassword: boolean;
