@@ -7,20 +7,30 @@ namespace App\Http\Controllers;
 use App\Services\TvDisplayService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class TvDisplayPairingController extends Controller
 {
-    public function redeem(Request $request, string $code, TvDisplayService $displays): RedirectResponse
+    public function show(): Response
     {
-        $paired = $displays->redeem($code, $request->ip());
+        return Inertia::render('tv-display-pair');
+    }
+
+    public function redeem(Request $request, TvDisplayService $displays): RedirectResponse
+    {
+        $data = $request->validate(['code' => ['required', 'string', 'max:20']]);
+
+        $paired = $displays->redeem($data['code'], $request->ip());
 
         if ($paired === null) {
-            abort(403, 'This pairing link is invalid, expired or already used. Ask a Super Administrator for a new one.');
+            throw ValidationException::withMessages([
+                'code' => 'That code is not valid or has expired. Ask a Super Administrator for a new one.',
+            ]);
         }
 
-        // Redirecting right away removes the code from the address bar and the history.
         return redirect()->route('tv-display.show')
-            ->header('Referrer-Policy', 'no-referrer')
             ->withCookie(cookie(
                 TvDisplayService::COOKIE,
                 $paired['token'],

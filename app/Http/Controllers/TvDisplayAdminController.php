@@ -36,7 +36,7 @@ class TvDisplayAdminController extends Controller
 
         return to_route('tv-displays.index')->with('tv_pairing', [
             'name' => $display->name,
-            'url' => route('tv-display.pair', ['code' => $code]),
+            'code' => $code,
             'expires_at' => $display->pairing_expires_at->toIso8601String(),
         ]);
     }
