@@ -38,7 +38,8 @@ function groupCode(code: string): string {
 export default function TvDisplaysIndex({ displays, pairing }: { displays: DisplayRow[]; pairing: Pairing }) {
     const timeZone = usePage<CampusNetShared>().props.campusnet?.timezone;
     const form = useForm({ name: '', reusable: false });
-    const [shown, setShown] = useState<Record<number, boolean>>({});
+    // Reusable codes are visible by default; click "Hide code" to mask one (for example before screen sharing).
+    const [hidden, setHidden] = useState<Record<number, boolean>>({});
 
     const create = (event: FormEvent) => {
         event.preventDefault();
@@ -78,7 +79,7 @@ export default function TvDisplaysIndex({ displays, pairing }: { displays: Displ
                         <p className="text-sm text-muted-foreground">
                             Code for <strong>{pairing.name}</strong>.{' '}
                             {pairing.reusable
-                                ? 'It does not expire. You can show it again from the list below.'
+                                ? 'It does not expire. It also stays visible in the list below.'
                                 : 'It is shown only once and works for 15 minutes.'}
                         </p>
                         <p className="mt-2 text-5xl font-semibold tracking-[0.15em] tabular-nums">{groupCode(pairing.code)}</p>
@@ -118,7 +119,7 @@ export default function TvDisplaysIndex({ displays, pairing }: { displays: Displ
                         <label htmlFor="reusable" className="text-sm">
                             <span className="font-medium">Keep this code (reusable, does not expire)</span>
                             <span className="block text-muted-foreground">
-                                A 10-digit code you can show again later. Anyone who knows it can open the wallboard until you revoke it.
+                                A 10-digit code that stays visible here. Anyone who knows it can open the wallboard until you revoke it.
                                 Using it on a new device disconnects the old one.
                             </span>
                         </label>
@@ -157,16 +158,16 @@ export default function TvDisplaysIndex({ displays, pairing }: { displays: Displ
                                         <td className="px-3 py-2">
                                             {display.reusable && display.code ? (
                                                 <span className="inline-flex items-center gap-2">
-                                                    <span className="font-mono tabular-nums">
-                                                        {shown[display.id] ? groupCode(display.code) : '•••••••••••'}
+                                                    <span className="font-mono text-base font-semibold tabular-nums">
+                                                        {hidden[display.id] ? '•••••••••••' : groupCode(display.code)}
                                                     </span>
                                                     <Button
                                                         type="button"
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={() => setShown((s) => ({ ...s, [display.id]: !s[display.id] }))}
+                                                        onClick={() => setHidden((h) => ({ ...h, [display.id]: !h[display.id] }))}
                                                     >
-                                                        {shown[display.id] ? 'Hide code' : 'Show code'}
+                                                        {hidden[display.id] ? 'Show code' : 'Hide code'}
                                                     </Button>
                                                 </span>
                                             ) : (
