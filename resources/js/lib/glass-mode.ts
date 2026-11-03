@@ -1,3 +1,4 @@
+import '@/lib/glass-mode';
 type GlassMode = 'full' | 'lite';
 
 const STORAGE_KEY = 'campusnet.glass';
