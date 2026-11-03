@@ -1,143 +1,291 @@
-@import 'tailwindcss';
+/* =========================================================================
+   Liquid Glass
+   Additive only. Existing tokens are untouched, so tables, charts, alerts
+   and every non-glass surface keep their opaque look.
+   ========================================================================= */
 
-@import 'tw-animate-css';
-
-@source '../views';
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-
-@custom-variant dark (&:is(.dark *));
-
-@theme {
-    --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-        'Noto Color Emoji';
-
-    --radius-lg: var(--radius);
-    --radius-md: calc(var(--radius) - 2px);
-    --radius-sm: calc(var(--radius) - 4px);
-
-    --color-background: var(--background);
-    --color-foreground: var(--foreground);
-
-    --color-card: var(--card);
-    --color-card-foreground: var(--card-foreground);
-
-    --color-popover: var(--popover);
-    --color-popover-foreground: var(--popover-foreground);
-
-    --color-primary: var(--primary);
-    --color-primary-foreground: var(--primary-foreground);
-
-    --color-secondary: var(--secondary);
-    --color-secondary-foreground: var(--secondary-foreground);
-
-    --color-muted: var(--muted);
-    --color-muted-foreground: var(--muted-foreground);
-
-    --color-accent: var(--accent);
-    --color-accent-foreground: var(--accent-foreground);
-
-    --color-destructive: var(--destructive);
-    --color-destructive-foreground: var(--destructive-foreground);
-
-    --color-border: var(--border);
-    --color-input: var(--input);
-    --color-ring: var(--ring);
-
-    --color-chart-1: var(--chart-1);
-    --color-chart-2: var(--chart-2);
-    --color-chart-3: var(--chart-3);
-    --color-chart-4: var(--chart-4);
-    --color-chart-5: var(--chart-5);
-
-    --color-sidebar: var(--sidebar);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-ring: var(--sidebar-ring);
-}
+/* ---- 1. Tokens ---- */
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.87 0 0);
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.87 0 0);
+    --glass-bg: oklch(1 0 0 / 0.58);
+    --glass-bg-strong: oklch(1 0 0 / 0.82);
+    --glass-bg-solid: oklch(0.985 0.003 250);
+    --glass-sheen: oklch(1 0 0 / 0.5);
+    --glass-border: oklch(1 0 0 / 0.75);
+    --glass-edge: oklch(0.3 0.03 255 / 0.1);
+    --glass-highlight: oklch(1 0 0 / 0.95);
+    --glass-shadow: oklch(0.3 0.04 255 / 0.22);
+    --glass-hover: oklch(0.3 0.03 255 / 0.06);
+    --glass-tint: oklch(0.6 0.16 250 / 0.13);
+    --glass-scrim: oklch(0.2 0.02 255 / 0.38);
+
+    --glass-filter: blur(18px) saturate(160%);
+    --glass-filter-strong: blur(26px) saturate(170%);
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.145 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.145 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.637 0.237 25.331);
-    --border: oklch(0.269 0 0);
-    --input: oklch(0.269 0 0);
-    --ring: oklch(0.439 0 0);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.985 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(0.269 0 0);
-    --sidebar-ring: oklch(0.439 0 0);
+    --glass-bg: oklch(0.24 0.012 255 / 0.55);
+    --glass-bg-strong: oklch(0.21 0.012 255 / 0.82);
+    --glass-bg-solid: oklch(0.21 0.01 255);
+    --glass-sheen: oklch(1 0 0 / 0.06);
+    --glass-border: oklch(1 0 0 / 0.14);
+    --glass-edge: oklch(0 0 0 / 0.55);
+    --glass-highlight: oklch(1 0 0 / 0.2);
+    --glass-shadow: oklch(0 0 0 / 0.55);
+    --glass-hover: oklch(1 0 0 / 0.07);
+    --glass-tint: oklch(0.7 0.15 250 / 0.2);
+    --glass-scrim: oklch(0 0 0 / 0.55);
 }
 
-@layer base {
-    * {
-        @apply border-border;
+/* Smaller blur on phones: cheaper to composite. */
+@media (max-width: 767px) {
+    :root {
+        --glass-filter: blur(12px) saturate(140%);
+        --glass-filter-strong: blur(16px) saturate(140%);
+    }
+}
+
+/* ---- 2. Lite mode: opaque surfaces, no backdrop-filter ---- */
+/* Triggers: OS "reduce transparency" / "more contrast", a browser without
+   backdrop-filter, or <html data-glass="lite"> (see glass-mode.ts). */
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+    :root,
+    .dark {
+        --glass-bg: var(--glass-bg-solid);
+        --glass-bg-strong: var(--glass-bg-solid);
+        --glass-sheen: transparent;
+        --glass-filter: none;
+        --glass-filter-strong: none;
     }
 
-    body {
-        @apply bg-background text-foreground;
+    body::before {
+        display: none;
+    }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    :root,
+    .dark {
+        --glass-bg: var(--glass-bg-solid);
+        --glass-bg-strong: var(--glass-bg-solid);
+        --glass-sheen: transparent;
+        --glass-filter: none;
+        --glass-filter-strong: none;
+    }
+}
+
+html[data-glass='lite'] {
+    --glass-bg: var(--glass-bg-solid);
+    --glass-bg-strong: var(--glass-bg-solid);
+    --glass-sheen: transparent;
+    --glass-filter: none;
+    --glass-filter-strong: none;
+}
+
+/* ---- 3. Ambient backdrop: static, fixed, no animation ---- */
+
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(60rem 42rem at 6% -8%, oklch(0.86 0.08 245 / 0.42), transparent 62%),
+        radial-gradient(52rem 38rem at 100% 2%, oklch(0.88 0.07 200 / 0.3), transparent 62%),
+        radial-gradient(50rem 40rem at 62% 112%, oklch(0.9 0.05 285 / 0.28), transparent 62%);
+}
+
+.dark body::before {
+    background:
+        radial-gradient(60rem 42rem at 6% -8%, oklch(0.36 0.1 255 / 0.5), transparent 62%),
+        radial-gradient(52rem 38rem at 100% 2%, oklch(0.34 0.08 205 / 0.38), transparent 62%),
+        radial-gradient(50rem 40rem at 62% 112%, oklch(0.32 0.08 285 / 0.34), transparent 62%);
+}
+
+/* ---- 4. Utilities (use in className) ---- */
+
+/* Floating nav, pills, selected KPI cards. */
+@utility glass {
+    background-color: var(--glass-bg);
+    background-image: linear-gradient(to bottom, var(--glass-sheen), transparent 55%);
+    border: 1px solid var(--glass-border);
+    box-shadow:
+        inset 0 1px 0 0 var(--glass-highlight),
+        0 0 0 1px var(--glass-edge),
+        0 12px 32px -16px var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+}
+
+/* Anything holding text or forms: modals, menus, sheets. */
+@utility glass-strong {
+    background-color: var(--glass-bg-strong);
+    background-image: linear-gradient(to bottom, var(--glass-sheen), transparent 45%);
+    border: 1px solid var(--glass-border);
+    box-shadow:
+        inset 0 1px 0 0 var(--glass-highlight),
+        0 0 0 1px var(--glass-edge),
+        0 28px 64px -24px var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter-strong);
+    backdrop-filter: var(--glass-filter-strong);
+}
+
+/* Glass + light hover lift. For KPI / summary tiles only, never for cards
+   that wrap a data table or traffic chart. */
+@utility glass-card {
+    background-color: var(--glass-bg);
+    background-image: linear-gradient(to bottom, var(--glass-sheen), transparent 55%);
+    border: 1px solid var(--glass-border);
+    box-shadow:
+        inset 0 1px 0 0 var(--glass-highlight),
+        0 0 0 1px var(--glass-edge),
+        0 12px 32px -16px var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+    transition:
+        box-shadow 180ms ease,
+        transform 180ms ease;
+
+    &:hover {
+        transform: translateY(-1px);
+        box-shadow:
+            inset 0 1px 0 0 var(--glass-highlight),
+            0 0 0 1px var(--glass-edge),
+            0 18px 40px -18px var(--glass-shadow);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        transition: none;
+
+        &:hover {
+            transform: none;
+        }
+    }
+}
+
+/* Dim layer behind modals. Deliberately NOT blurred: a full-viewport blur is
+   the most expensive thing you can ask a weak GPU to do. */
+@utility glass-scrim {
+    background-color: var(--glass-scrim);
+}
+
+/* ---- 5. Hooks into existing shadcn components (no file edits needed) ---- */
+/* Unlayered on purpose: unlayered CSS beats Tailwind's utility layer, so
+   these win over bg-sidebar / bg-popover without !important. */
+
+[data-slot='sidebar-wrapper'] {
+    background-color: transparent;
+}
+
+/* Sidebar (desktop). */
+[data-slot='sidebar-inner'] {
+    background-color: var(--glass-bg);
+    background-image: linear-gradient(to bottom, var(--glass-sheen), transparent 40%);
+    box-shadow: inset -1px 0 0 0 var(--glass-border);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+}
+
+/* Inset / floating variants: rounded glass panel with a lit edge. */
+[data-slot='sidebar'][data-variant='inset'] [data-slot='sidebar-inner'],
+[data-slot='sidebar'][data-variant='floating'] [data-slot='sidebar-inner'] {
+    border: 1px solid var(--glass-border);
+    border-radius: 1rem;
+    box-shadow:
+        inset 0 1px 0 0 var(--glass-highlight),
+        0 0 0 1px var(--glass-edge),
+        0 12px 32px -16px var(--glass-shadow);
+}
+
+/* Mobile sidebar drawer, sheets, alert dialogs. */
+[data-slot='sheet-content'],
+[data-slot='sidebar'][data-mobile='true'],
+[data-slot='alert-dialog-content'] {
+    background-color: var(--glass-bg-strong);
+    background-image: linear-gradient(to bottom, var(--glass-sheen), transparent 45%);
+    border-color: var(--glass-border);
+    -webkit-backdrop-filter: var(--glass-filter-strong);
+    backdrop-filter: var(--glass-filter-strong);
+}
+
+[data-slot='sheet-overlay'],
+[data-slot='alert-dialog-overlay'] {
+    background-color: var(--glass-scrim);
+}
+
+/* Dropdowns, selects, popovers, context menus. */
+[data-slot='dropdown-menu-content'],
+[data-slot='dropdown-menu-sub-content'],
+[data-slot='select-content'],
+[data-slot='popover-content'],
+[data-slot='context-menu-content'],
+[data-slot='navigation-menu-viewport'] {
+    background-color: var(--glass-bg-strong);
+    background-image: linear-gradient(to bottom, var(--glass-sheen), transparent 45%);
+    border-color: var(--glass-border);
+    box-shadow:
+        inset 0 1px 0 0 var(--glass-highlight),
+        0 0 0 1px var(--glass-edge),
+        0 20px 48px -20px var(--glass-shadow);
+    -webkit-backdrop-filter: var(--glass-filter-strong);
+    backdrop-filter: var(--glass-filter-strong);
+}
+
+/* Keyboard / hover highlight inside menus (destructive items keep their red). */
+[data-slot$='-item'][data-highlighted]:not([data-variant='destructive']) {
+    background-color: var(--glass-tint);
+}
+
+/* Sidebar navigation buttons. */
+[data-sidebar='menu-button'] {
+    transition:
+        background-color 150ms ease,
+        box-shadow 150ms ease;
+}
+
+[data-sidebar='menu-button']:hover:not([data-active='true']) {
+    background-color: var(--glass-hover);
+}
+
+[data-sidebar='menu-button'][data-active='true'] {
+    background-color: var(--glass-tint);
+    box-shadow:
+        inset 0 1px 0 0 var(--glass-highlight),
+        0 0 0 1px var(--glass-border);
+}
+
+/* Topbar: the <header> directly inside the inset. `clip` (not `hidden`)
+   keeps position: sticky working. */
+[data-slot='sidebar-inset'] {
+    overflow-x: clip;
+}
+
+[data-slot='sidebar-inset'] > header {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    border-bottom-color: transparent;
+    background-color: var(--glass-bg-strong);
+    background-image: linear-gradient(to bottom, var(--glass-sheen), transparent 100%);
+    box-shadow:
+        inset 0 -1px 0 0 var(--glass-border),
+        0 1px 0 0 var(--glass-edge);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+}
+
+/* ---- 6. Reduced motion ---- */
+
+@media (prefers-reduced-motion: reduce) {
+    [data-sidebar='menu-button'] {
+        transition: none;
+    }
+
+    [data-slot$='-content'][data-state],
+    [data-slot$='-overlay'][data-state] {
+        animation: none;
+        transition: none;
     }
 }
