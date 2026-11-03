@@ -4,149 +4,182 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\UserRole;
-use App\Models\User;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\DB;
+use App\Enums\AlertType;
+use App\Models\NetworkAlert;
+use App\Monitoring\MonitoringManager;
 
 /**
- * Listing and changing user accounts: role and active/inactive. Accounts are not created
- * or deleted here. A person who is deactivated is signed out on their next request.
+ * Payload for the TV wallboard. It reuses DashboardService (same data, same demo/real rules)
+ * and returns only what the screen shows. Nothing sensitive is selected: no IP addresses,
+ * no SNMP credentials, no user data.
  */
-final class UserManagementService
+final class TvDashboardService
 {
-    public const PER_PAGE = 20;
-
-    public function __construct(private readonly AuditLogger $audit) {}
+    public function __construct(
+        private readonly DashboardService $dashboard,
+        private readonly MonitoringManager $monitoring,
+        private readonly SettingsService $settings,
+    ) {}
 
     /**
-     * @param  array{search: string, role: string, status: string}  $filters
      * @return array<string, mixed>
      */
-    public function list(array $filters, User $viewer): array
+    public function build(): array
     {
-        $term = '%'.$filters['search'].'%';
+        $base = $this->dashboard->build('1h');
+        $source = $this->monitoring->driverName();
 
-        $page = User::query()
-            ->when($filters['search'] !== '', fn (Builder $q) => $q->where(fn (Builder $inner) => $inner
-                ->where('name', 'like', $term)
-                ->orWhere('email', 'like', $term)))
-            ->when($filters['role'] !== '', fn (Builder $q) => $q->where('role', $filters['role']))
-            ->when($filters['status'] === 'active', fn (Builder $q) => $q->where('is_active', true))
-            ->when($filters['status'] === 'inactive', fn (Builder $q) => $q->where('is_active', false))
+        $alertCounts = $this->alertCounts($source);
+
+        return [
+            'generated_at' => $base['generated_at'],
+            'campus_name' => (string) $this->settings->get('campus_name'),
+            'timezone' => (string) $this->settings->get('timezone'),
+            'overall' => $this->overall($base, $alertCounts),
+            'mode' => $base['mode'],
+            'capacity_mbps' => $base['capacity_mbps'],
+            'thresholds' => $base['thresholds'],
+            'collector' => $base['collector'],
+            'latest_measurement_at' => $base['latest_measurement_at'],
+            'wan' => [
+                'configured' => $base['wan']['configured'],
+                'current' => $base['wan']['current'],
+            ],
+            'summary' => $base['summary'] === null ? null : [
+                'avg_in_mbps' => $base['summary']['avg_in_mbps'],
+                'avg_out_mbps' => $base['summary']['avg_out_mbps'],
+                'peak_in_mbps' => $base['summary']['peak_in_mbps'],
+                'peak_out_mbps' => $base['summary']['peak_out_mbps'],
+                'avg_utilization_percent' => $base['summary']['avg_utilization_percent'],
+                'peak_utilization_percent' => $base['summary']['peak_utilization_percent'],
+            ],
+            'history' => array_map(static fn (array $point): array => [
+                't' => $point['t'],
+                'in_mbps' => $point['in_mbps'],
+                'out_mbps' => $point['out_mbps'],
+            ], $base['history']),
+            'devices' => [
+                ...$base['devices'],
+                'list' => $this->devices($source),
+            ],
+            'alerts' => [
+                ...$alertCounts,
+                'list' => $this->openAlerts($source),
+            ],
+            'events' => $this->events($source),
+        ];
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function devices(string $source): array
+    {
+        return $this->dashboard->deviceQuery($source)
+            ->where('is_enabled', true)
             ->orderBy('name')
-            ->orderBy('id')
-            ->paginate(self::PER_PAGE)
-            ->withQueryString();
+            ->limit(60)
+            // Only display fields are selected, so credentials and IP addresses never leave the database.
+            ->get(['id', 'name', 'device_type', 'location', 'last_status', 'last_successful_poll_at'])
+            ->map(fn ($device): array => [
+                'id' => $device->id,
+                'name' => $device->name,
+                'type' => $device->device_type->label(),
+                'location' => $device->location,
+                'status' => $device->last_status->value,
+                'last_successful_poll_at' => $device->last_successful_poll_at?->toIso8601String(),
+            ])->all();
+    }
 
-        $page->through(function (User $user) use ($viewer): array {
-            $role = $this->roleOf($user);
+    /**
+     * @return array{active: int, critical: int, warning: int, unreachable: int, collector_failures: int}
+     */
+    private function alertCounts(string $source): array
+    {
+        $rows = $this->dashboard->alertQuery($source)
+            ->open()
+            ->selectRaw('severity, type, COUNT(*) as aggregate')
+            ->groupBy('severity', 'type')
+            ->toBase()
+            ->get();
 
-            return [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => ['value' => $role->value, 'label' => $role->label()],
-                'is_active' => (bool) $user->is_active,
-                'last_login_at' => $user->last_login_at?->toIso8601String(),
-                'created_at' => $user->created_at?->toIso8601String(),
-                'is_self' => $user->id === $viewer->id,
-            ];
-        });
+        $sum = static fn (callable $match): int => (int) $rows->filter($match)->sum('aggregate');
 
         return [
-            'users' => $page->toArray(),
-            'stats' => $this->stats(),
-            'roles' => array_map(
-                fn (UserRole $role): array => ['value' => $role->value, 'label' => $role->label()],
-                UserRole::cases(),
-            ),
+            'active' => $sum(static fn (object $row): bool => true),
+            'critical' => $sum(static fn (object $row): bool => $row->severity === 'critical'),
+            'warning' => $sum(static fn (object $row): bool => $row->severity === 'warning'),
+            'unreachable' => $sum(static fn (object $row): bool => $row->type === AlertType::DeviceUnreachable->value),
+            'collector_failures' => $sum(static fn (object $row): bool => in_array(
+                $row->type,
+                [AlertType::CollectorFailure->value, AlertType::NoRecentData->value],
+                true,
+            )),
         ];
     }
 
     /**
-     * @param  array{role?: string, is_active?: bool}  $changes
-     * @return string|null an error message, or null when the account was updated (or nothing changed)
+     * @return list<array<string, mixed>>
      */
-    public function update(User $target, User $actor, array $changes): ?string
+    private function openAlerts(string $source): array
     {
-        $newRole = isset($changes['role']) ? UserRole::from($changes['role']) : null;
-        $newActive = array_key_exists('is_active', $changes) ? (bool) $changes['is_active'] : null;
-
-        $roleChanges = $newRole !== null && $newRole !== $this->roleOf($target);
-        $statusChanges = $newActive !== null && $newActive !== (bool) $target->is_active;
-
-        if (! $roleChanges && ! $statusChanges) {
-            return null;
-        }
-
-        if ($target->id === $actor->id) {
-            return 'You cannot change your own role or deactivate your own account. Ask another super administrator.';
-        }
-
-        return DB::transaction(function () use ($target, $actor, $newRole, $newActive, $roleChanges, $statusChanges): ?string {
-            // Lock the super administrators so two people cannot demote each other at the same moment.
-            $superAdmins = User::query()
-                ->where('role', UserRole::SuperAdmin->value)
-                ->where('is_active', true)
-                ->lockForUpdate()
-                ->pluck('id');
-
-            $losesSuperAdmin = $superAdmins->contains($target->id)
-                && (($roleChanges && $newRole !== UserRole::SuperAdmin) || ($statusChanges && $newActive === false));
-
-            if ($losesSuperAdmin && $superAdmins->count() <= 1) {
-                return 'This is the last active super administrator. Promote another account first, so the system is never left without one.';
-            }
-
-            $fromRole = $this->roleOf($target);
-
-            $target->forceFill(array_filter([
-                'role' => $roleChanges ? $newRole?->value : null,
-                'is_active' => $statusChanges ? $newActive : null,
-            ], fn ($value): bool => $value !== null))->save();
-
-            if ($roleChanges && $newRole !== null) {
-                $this->audit->record('user.role_changed', $target, [
-                    'from' => $fromRole->value,
-                    'to' => $newRole->value,
-                ], "Role of {$target->name} changed from {$fromRole->label()} to {$newRole->label()}.", $actor);
-            }
-
-            if ($statusChanges) {
-                $this->audit->record(
-                    $newActive ? 'user.activated' : 'user.deactivated',
-                    $target,
-                    [],
-                    $newActive ? "Account of {$target->name} activated." : "Account of {$target->name} deactivated.",
-                    $actor,
-                );
-            }
-
-            return null;
-        });
-    }
-
-    private function roleOf(User $user): UserRole
-    {
-        $role = $user->role;
-
-        return $role instanceof UserRole ? $role : (UserRole::tryFrom((string) $role) ?? UserRole::Viewer);
+        return $this->dashboard->alertQuery($source)
+            ->open()
+            ->with(['device' => fn ($query) => $query->select('id', 'name')])
+            ->latest('triggered_at')
+            ->limit(20)
+            ->get()
+            ->map(fn (NetworkAlert $alert): array => $this->alertRow($alert))
+            ->all();
     }
 
     /**
-     * @return array{total: int, active: int, inactive: int, super_admins: int}
+     * @return list<array<string, mixed>>
      */
-    private function stats(): array
+    private function events(string $source): array
     {
-        $total = User::query()->count();
-        $active = User::query()->where('is_active', true)->count();
+        return $this->dashboard->alertQuery($source)
+            ->with(['device' => fn ($query) => $query->select('id', 'name')])
+            ->latest('triggered_at')
+            ->limit(8)
+            ->get()
+            ->map(fn (NetworkAlert $alert): array => $this->alertRow($alert))
+            ->all();
+    }
 
+    /**
+     * @return array<string, mixed>
+     */
+    private function alertRow(NetworkAlert $alert): array
+    {
         return [
-            'total' => $total,
-            'active' => $active,
-            'inactive' => $total - $active,
-            'super_admins' => User::query()->where('role', UserRole::SuperAdmin->value)->where('is_active', true)->count(),
+            'id' => $alert->id,
+            'title' => $alert->title,
+            'severity' => $alert->severity->value,
+            'status' => $alert->status->value,
+            'type' => $alert->type instanceof AlertType ? $alert->type->value : (string) $alert->type,
+            'device' => $alert->device?->name,
+            'triggered_at' => $alert->triggered_at->toIso8601String(),
+            'resolved_at' => $alert->resolved_at?->toIso8601String(),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $base
+     * @param  array<string, int>  $alerts
+     */
+    private function overall(array $base, array $alerts): string
+    {
+        $collector = $base['collector']['status'];
+
+        return match (true) {
+            $collector === 'misconfigured' || $alerts['critical'] > 0 => 'critical',
+            in_array($collector, ['no_devices', 'no_data'], true) => 'unknown',
+            $collector === 'stale'
+                || ($base['wan']['current']['stale'] ?? false)
+                || $alerts['warning'] > 0
+                || $base['devices']['unreachable'] > 0 => 'degraded',
+            default => 'operational',
+        };
     }
 }

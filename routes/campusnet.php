@@ -9,16 +9,35 @@ use App\Http\Controllers\NetworkInterfaceController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\TrafficHistoryController;
+use App\Http\Controllers\TvDisplayAdminController;
+use App\Http\Controllers\TvDisplayController;
+use App\Http\Controllers\TvDisplayPairingController;
 use App\Http\Controllers\UserController;
+use App\Http\Middleware\EnsureTvDisplayAccess;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
 | CampusNet routes
 |--------------------------------------------------------------------------
-| Every route is behind authentication and a permission gate. The gates are defined
-| in CampusNetServiceProvider from the UserRole permission matrix.
+| Every route is behind authentication and a permission gate, except the TV wallboard
+| routes below, which also accept a paired display. The gates are defined in
+| CampusNetServiceProvider from the UserRole permission matrix.
 */
+
+// TV wallboard: a signed-in user with tv-display.view, or a paired display (cookie) may view it.
+Route::get('tv-display/pair/{code}', [TvDisplayPairingController::class, 'redeem'])
+    ->where('code', '[A-Za-z0-9]{40}')
+    ->middleware('throttle:10,1')
+    ->name('tv-display.pair');
+
+Route::middleware(EnsureTvDisplayAccess::class)->group(function () {
+    Route::get('tv-display', [TvDisplayController::class, 'show'])->name('tv-display.show');
+
+    Route::get('tv-display/data', [TvDisplayController::class, 'data'])
+        ->middleware('throttle:120,1')
+        ->name('tv-display.data');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])
@@ -86,6 +105,20 @@ Route::middleware('auth')->group(function () {
     Route::get('audit-logs', [AuditLogController::class, 'index'])
         ->middleware('can:audit.view')
         ->name('audit-logs.index');
+
+    // TV display access management (Super Administrator only).
+    Route::get('tv-displays', [TvDisplayAdminController::class, 'index'])
+        ->middleware('can:tv-display.manage')
+        ->name('tv-displays.index');
+
+    Route::post('tv-displays', [TvDisplayAdminController::class, 'store'])
+        ->middleware(['can:tv-display.manage', 'throttle:10,1'])
+        ->name('tv-displays.store');
+
+    Route::delete('tv-displays/{display}', [TvDisplayAdminController::class, 'destroy'])
+        ->whereNumber('display')
+        ->middleware('can:tv-display.manage')
+        ->name('tv-displays.destroy');
 
     Route::prefix('devices')->name('devices.')->controller(MonitoredDeviceController::class)->group(function () {
         Route::get('/', 'index')->middleware('can:devices.view')->name('index');

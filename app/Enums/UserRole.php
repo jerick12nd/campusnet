@@ -55,6 +55,10 @@ enum UserRole: string
                 'users.manage',
                 'audit.view',
             ],
+
+
+
+            
         };
     }
 
