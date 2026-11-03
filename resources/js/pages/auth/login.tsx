@@ -1,5 +1,5 @@
-import { Form, Head, usePage } from '@inertiajs/react';
-import { FlaskConical, ShieldCheck } from 'lucide-react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
+import { FlaskConical, ShieldCheck, Tv } from 'lucide-react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import TeamInvitationAlert from '@/components/team-invitation-alert';
@@ -16,14 +16,7 @@ import PasskeyVerify from '@/components/passkey-verify';
 /* @end-chisel-passkeys */
 import type { TeamInvitationContext } from '@/types';
 import type { CampusNetShared } from '@/types/campusnet';
-import { Link } from '@inertiajs/react'; // dili na i-add kung naa na sa imports
 
-<div className="text-center text-sm text-muted-foreground">
-    Setting up a wall display?{' '}
-    <Link href="/tv-display/pair" className="underline underline-offset-4">
-        TV Display
-    </Link>
-</div>
 type Props = {
     status?: string;
     canResetPassword: boolean;
@@ -152,6 +145,20 @@ export default function Login({
                     </>
                 )}
             </Form>
+
+            {/* A wall TV cannot type a password: it connects with a one-time code from a Super Administrator. */}
+            <div className="flex items-center gap-3 text-xs text-muted-foreground uppercase">
+                <span className="h-px flex-1 bg-border" />
+                or
+                <span className="h-px flex-1 bg-border" />
+            </div>
+
+            <Button asChild variant="outline" className="w-full" tabIndex={6}>
+                <Link href="/tv-display/pair">
+                    <Tv className="size-4" aria-hidden="true" />
+                    Use a TV Display code
+                </Link>
+            </Button>
 
             <p className="flex items-start justify-center gap-2 text-center text-xs text-muted-foreground">
                 <ShieldCheck

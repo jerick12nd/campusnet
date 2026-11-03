@@ -15,7 +15,7 @@ class TvDisplayPairingController extends Controller
 {
     public function show(): Response
     {
-        return Inertia::render('tv-display-pair');
+        return Inertia::render('auth/tv-display');
     }
 
     public function redeem(Request $request, TvDisplayService $displays): RedirectResponse
