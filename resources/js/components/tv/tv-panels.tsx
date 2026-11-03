@@ -30,7 +30,7 @@ export function Glass({ className, children }: { className?: string; children: R
     return (
         <section
             className={cn(
-                'min-h-0 rounded-[1.5rem] border border-white/10 bg-white/[0.07] shadow-[0_0.5rem_2rem_rgba(0,0,0,0.35)] backdrop-blur-sm',
+                'min-h-0 rounded-3xl border border-white/10 bg-white/[0.07] shadow-[0_0.5rem_2rem_rgba(0,0,0,0.35)] backdrop-blur-sm',
                 className,
             )}
         >
@@ -114,7 +114,7 @@ export function TvHeader({
     return (
         <header className="flex shrink-0 items-center justify-between gap-6">
             <div className="flex items-center gap-4">
-                <img src="/images/dssc-seal.png" alt="" className="size-[4.5rem] shrink-0 object-contain" />
+                <img src="/images/dssc-seal.png" alt="" className="size-18 shrink-0 object-contain" />
                 <div>
                     <div className="text-[2.2rem] leading-tight font-semibold">DSSC CAMPUSNET</div>
                     <div className="text-[1.2rem] text-white/70">{campusName}</div>
@@ -377,7 +377,7 @@ const SEVERITY_RANK: Record<Severity, number> = { info: 1, warning: 2, critical:
 
 function Count({ label, value, tone }: { label: string; value: number; tone: string }) {
     return (
-        <div className="rounded-[1rem] bg-white/[0.06] px-3 py-2 text-center">
+        <div className="rounded-2xl bg-white/6 px-3 py-2 text-center">
             <div className={cn('text-[2rem] leading-none font-semibold tabular-nums', value > 0 && tone)}>{value}</div>
             <div className="mt-1 text-[0.85rem] text-white/60">{label}</div>
         </div>
@@ -444,7 +444,7 @@ const SERVICE_LABEL: Record<TvData['collector']['status'], { text: string; ok: b
 
 function HealthRow({ label, value, ok, sub }: { label: string; value: string; ok?: boolean; sub?: string }) {
     return (
-        <div className="flex items-center justify-between gap-4 py-[0.5rem] text-[1.15rem]">
+        <div className="flex items-center justify-between gap-4 py-2 text-[1.15rem]">
             <span className="text-white/70">{label}</span>
             <span className="text-right">
                 <span className={cn('flex items-center justify-end gap-2 font-semibold', ok === undefined ? '' : ok ? 'text-emerald-300' : 'text-amber-300')}>
