@@ -62,7 +62,7 @@ export default function Landing() {
 
     return (
         <>
-            <Head title="CampusNet · Campus bandwidth monitoring" />
+            <Head title="DSSC CampusNet · Campus bandwidth monitoring" />
 
             <div className="min-h-screen bg-neutral-950 text-neutral-100 antialiased">
                 <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-white focus:px-3 focus:py-2 focus:text-neutral-950">
@@ -71,11 +71,9 @@ export default function Landing() {
 
                 <header className="sticky top-0 z-40 border-b border-white/10 bg-neutral-950/80 backdrop-blur">
                     <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-                        <a href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-                            <span className="grid size-7 place-items-center rounded-md bg-emerald-500 text-neutral-950" aria-hidden="true">
-                                <Network className="size-4" />
-                            </span>
-                            CampusNet
+                        <a href="/" className="flex items-center gap-2.5 font-semibold tracking-tight">
+                            <img src="/images/dssc-seal.png" alt="" width={32} height={32} className="size-8" />
+                            DSSC CAMPUSNET
                         </a>
 
                         <nav aria-label="Page sections" className="hidden items-center gap-6 text-sm text-neutral-300 md:flex">
@@ -95,7 +93,13 @@ export default function Landing() {
                     <section className="relative overflow-hidden border-b border-white/10">
                         <div className="pointer-events-none absolute inset-0 -z-0 bg-[radial-gradient(60%_50%_at_50%_0%,rgba(16,185,129,0.18),transparent)]" aria-hidden="true" />
                         <div className="relative mx-auto max-w-6xl px-4 py-20 md:py-28">
-                            <p className="mb-4 inline-block rounded-full border border-white/15 px-3 py-1 text-xs text-neutral-300">Campus bandwidth monitoring and network usage analytics</p>
+                            <div className="mb-6 flex items-center gap-4">
+                                <img src="/images/dssc-seal.png" alt="Seal of Davao del Sur State College" width={96} height={96} className="size-20 md:size-24" />
+                                <p className="text-sm text-neutral-300">
+                                    Davao del Sur State College
+                                    <span className="block text-xs text-neutral-400">Campus bandwidth monitoring and network usage analytics</span>
+                                </p>
+                            </div>
                             <h1 className="max-w-3xl text-4xl font-semibold tracking-tight text-balance md:text-6xl">Know where your campus bandwidth goes.</h1>
                             <p className="mt-5 max-w-2xl text-lg text-neutral-300">
                                 CampusNet gives an ICT team one place to watch internet usage, see which links are busy, get alerted when something breaks, and report on it, without guessing and without
@@ -217,7 +221,7 @@ export default function Landing() {
 
                 <footer className="border-t border-white/10">
                     <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-6 text-sm text-neutral-400">
-                        <p>CampusNet &middot; Campus bandwidth monitoring</p>
+                        <p>DSSC CAMPUSNET &middot; Davao del Sur State College</p>
                         <p>Designed and built by Jerick Vicente</p>
                     </div>
                 </footer>
