@@ -13,14 +13,15 @@ void createInertiaApp({
     layout: (name) => {
         switch (true) {
             case name === 'welcome' || name === 'landing':
-            return null;
+                return null;
             case name.startsWith('auth/'):
                 return AuthLayout;
             case name.startsWith('settings/'):
             case name.startsWith('teams/'):
                 return [AppLayout, SettingsLayout];
             default:
-                return AppLayout;
+                // The CampusNet pages wrap themselves in <AppLayout>, so no default layout here.
+                return null;
         }
     },
     strictMode: true,
