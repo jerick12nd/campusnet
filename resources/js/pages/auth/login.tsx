@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { playErrorSound } from '@/hooks/use-error-sound';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 /* @chisel-passkeys */
@@ -75,6 +76,7 @@ export default function Login({
 
             <Form
                 {...store.form()}
+                onError={playErrorSound}
                 resetOnSuccess={['password']}
                 className="flex flex-col gap-6"
             >
