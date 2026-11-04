@@ -1,5 +1,5 @@
-import { Link, router } from '@inertiajs/react';
-import { LogOut, Settings } from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { LogOut, Settings, UserCog } from 'lucide-react';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -18,6 +18,11 @@ type Props = {
 
 export function UserMenuContent({ user }: Props) {
     const cleanup = useMobileNavigation();
+    const { access } = usePage<{ access?: { permissions: string[] } }>().props;
+
+    // CampusNet system settings (campus name, time zone, thresholds). The server still
+    // authorizes the page; this only decides whether the menu item is shown.
+    const canViewSystemSettings = (access?.permissions ?? []).includes('settings.view');
 
     const handleLogout = () => {
         cleanup();
@@ -40,10 +45,25 @@ export function UserMenuContent({ user }: Props) {
                         prefetch
                         onClick={cleanup}
                     >
-                        <Settings className="mr-2" />
-                        Settings
+                        <UserCog className="mr-2" />
+                        Account settings
                     </Link>
                 </DropdownMenuItem>
+
+                {canViewSystemSettings && (
+                    <DropdownMenuItem asChild>
+                        <Link
+                            className="block w-full cursor-pointer"
+                            href="/system-settings"
+                            prefetch
+                            onClick={cleanup}
+                            data-test="system-settings-link"
+                        >
+                            <Settings className="mr-2" />
+                            System Settings
+                        </Link>
+                    </DropdownMenuItem>
+                )}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>

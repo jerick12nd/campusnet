@@ -8,7 +8,6 @@ import {
     Network,
     Router,
     ScrollText,
-    Settings,
     Users,
     type LucideIcon,
 } from 'lucide-react';
@@ -48,6 +47,7 @@ type NavEntry = {
 // Order matches the CampusNet specification. Visibility is filtered by the
 // permissions the server shares with the page; the server still authorizes
 // every request, so this list is a convenience, not security.
+// System Settings lives in the account menu (top right), not here.
 const NAVIGATION: NavEntry[] = [
     { title: 'Dashboard', icon: LayoutDashboard, permission: 'dashboard.view', href: '/dashboard' },
     { title: 'Network Devices', icon: Router, permission: 'devices.view', href: '/devices' },
@@ -58,7 +58,6 @@ const NAVIGATION: NavEntry[] = [
     { title: 'Reports', icon: FileText, permission: 'reports.view', href: '/reports' },
     { title: 'User Management', icon: Users, permission: 'users.manage', href: '/users' },
     { title: 'Audit Logs', icon: ScrollText, permission: 'audit.view', href: '/audit-logs' },
-    { title: 'System Settings', icon: Settings, permission: 'settings.view', href: '/system-settings' },
 ];
 
 export function AppSidebar() {
