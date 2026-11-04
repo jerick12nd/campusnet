@@ -1,69 +1,50 @@
 import { Link } from '@inertiajs/react';
-import { home } from '@/routes';
-import type { AuthLayoutProps } from '@/types';
+import type { PropsWithChildren } from 'react';
 
-export default function AuthCampusNetLayout({
+export default function AuthCampusnetLayout({
     children,
     title,
     description,
-}: AuthLayoutProps) {
+}: PropsWithChildren<{
+    title?: string;
+    description?: string;
+}>) {
     return (
-        <div className="grid min-h-svh lg:grid-cols-2">
-            <div className="flex flex-col gap-4 p-6 md:p-10">
-                <div className="flex justify-center gap-2 md:justify-start">
-                    <Link
-                        href={home()}
-                        className="flex items-center gap-2.5 font-medium"
-                    >
-                        <img
-                            src="/images/dssc-seal.png"
-                            alt=""
-                            width={32}
-                            height={32}
-                            className="size-8"
-                        />
-                        DSSC CAMPUSNET
-                    </Link>
-                </div>
+        <div className="grid min-h-svh bg-[#0a0a0a] text-white lg:grid-cols-2">
+            {/* LEFT: design / branding panel (hidden on small screens) */}
+            <div className="relative hidden flex-col items-center justify-center overflow-hidden bg-[#18181b] bg-[radial-gradient(ellipse_at_top,rgba(16,94,72,0.45),transparent_60%)] p-10 text-center lg:flex">
+                <img
+                    src="/images/dssc-seal.png"
+                    alt="Davao del Sur State College seal"
+                    className="size-56 object-contain drop-shadow-[0_0_2rem_rgba(0,0,0,0.5)]"
+                />
+                <h2 className="mt-8 text-4xl font-bold tracking-tight">DSSC CAMPUSNET</h2>
+                <p className="mt-2 text-lg text-white/80">Davao del Sur State College</p>
+                <p className="mt-6 max-w-xs text-base text-white/60">
+                    Campus bandwidth monitoring
+                    <br />
+                    and network usage analytics.
+                </p>
+            </div>
+
+            {/* RIGHT: login form */}
+            <div className="relative flex flex-col p-6 md:p-10">
+                <Link href="/" className="flex items-center gap-2 text-sm font-medium">
+                    <img src="/images/dssc-seal.png" alt="" className="size-8 shrink-0 object-contain" />
+                    <span>DSSC CAMPUSNET</span>
+                </Link>
 
                 <div className="flex flex-1 items-center justify-center">
-                    <div className="flex w-full max-w-sm flex-col gap-6">
-                        <div className="flex flex-col items-center gap-1 text-center">
-                            <h1 className="text-2xl font-bold">{title}</h1>
-                            <p className="text-sm text-balance text-muted-foreground">
-                                {description}
-                            </p>
-                        </div>
-
+                    <div className="w-full max-w-sm space-y-6">
+                        {(title || description) && (
+                            <div className="space-y-2 text-center">
+                                {title && <h1 className="text-2xl font-semibold">{title}</h1>}
+                                {description && <p className="text-sm text-balance text-white/60">{description}</p>}
+                            </div>
+                        )}
                         {children}
                     </div>
                 </div>
-            </div>
-
-            <div className="relative hidden flex-col items-center justify-center gap-6 overflow-hidden bg-zinc-900 p-10 text-center text-white lg:flex">
-                <div
-                    className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_60%_at_50%_0%,rgba(16,185,129,0.25),transparent)]"
-                    aria-hidden="true"
-                />
-
-                <img
-                    src="/images/dssc-seal.png"
-                    alt="Seal of Davao del Sur State College"
-                    width={224}
-                    height={224}
-                    className="relative size-56"
-                />
-
-                <div className="relative space-y-1">
-                    <p className="text-3xl font-semibold tracking-wide">
-                        DSSC CAMPUSNET
-                    </p>
-                    <p className="text-zinc-300">Davao del Sur State College</p>
-                </div>
-
-                <p className="relative max-w-sm text-balance text-zinc-400">
-                    Campus bandwidth monitoring and network usage analytics.
-                </p>
             </div>
         </div>
     );
