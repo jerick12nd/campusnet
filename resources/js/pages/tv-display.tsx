@@ -293,7 +293,7 @@ export default function TvDisplay({ initial, can_control }: TvPageProps) {
                 <KpiRow data={current} dim={dim} />
 
                 {showChart && (
-                    <Glass className={cn('flex min-h-0 flex-col p-5', showBottom ? 'flex-[5]' : 'flex-1')}>
+                    <Glass className={cn('flex min-h-0 flex-col p-5', showBottom ? 'flex-5' : 'flex-1')}>
                         <div className="mb-1 text-[1.15rem] font-semibold tracking-wide text-white/70 uppercase">
                             Live bandwidth · {settings.range === 'hour' ? 'Last hour' : 'Current session (since this display opened)'}
                         </div>
@@ -314,7 +314,7 @@ export default function TvDisplay({ initial, can_control }: TvPageProps) {
 
                 {showBottom && (
                     <div
-                        className={cn('grid min-h-0 gap-4', showChart ? 'flex-[4]' : 'flex-1')}
+                        className={cn('grid min-h-0 gap-4', showChart ? 'flex-4' : 'flex-1')}
                         style={{ gridTemplateColumns: `repeat(${visiblePanels.length}, minmax(0, 1fr))` }}
                     >
                         {visiblePanels.map((panel) => {
@@ -383,7 +383,7 @@ export default function TvDisplay({ initial, can_control }: TvPageProps) {
                     <div aria-hidden="true" className="pointer-events-none absolute bottom-[0.4rem] left-1/2 flex -translate-x-1/2 items-center gap-5 text-[0.8rem]">
                         {SLIDES.map((slide) => (
                             <span key={slide.id} className={cn('flex items-center gap-1.5', activeSlide === slide.id ? 'text-white' : 'text-white/35')}>
-                                <span className={cn('size-[0.5rem] rounded-full', activeSlide === slide.id ? 'bg-sky-400' : 'bg-white/30')} />
+                                <span className={cn('size-2 rounded-full', activeSlide === slide.id ? 'bg-sky-400' : 'bg-white/30')} />
                                 {slide.label}
                             </span>
                         ))}
@@ -404,7 +404,7 @@ export default function TvDisplay({ initial, can_control }: TvPageProps) {
                     <div
                         role="toolbar"
                         aria-label="Display controls"
-                        className="fixed top-4 right-4 z-50 w-[26rem] space-y-3 rounded-[1.2rem] border border-white/15 bg-[#0b1220]/95 p-4 text-[1rem] shadow-2xl"
+                        className="fixed top-4 right-4 z-50 w-104 space-y-3 rounded-[1.2rem] border border-white/15 bg-[#0b1220]/95 p-4 text-[1rem] shadow-2xl"
                     >
                         <div className="flex gap-2">
                             <Btn onClick={() => void toggleFullscreen()}>{fullscreen ? 'Exit full screen' : 'Full screen'}</Btn>
