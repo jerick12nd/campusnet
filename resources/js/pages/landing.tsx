@@ -64,6 +64,7 @@ export default function Landing() {
         <>
             <Head title="DSSC CampusNet · Campus bandwidth monitoring" />
 
+            {/* Itom nga background, light blue (DSSC) ra ang accent. */}
             <div className="min-h-screen bg-neutral-950 text-neutral-100 antialiased">
                 <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-white focus:px-3 focus:py-2 focus:text-neutral-950">
                     Skip to content
@@ -91,7 +92,10 @@ export default function Landing() {
 
                 <main id="main">
                     <section className="relative overflow-hidden border-b border-white/10">
-                        <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(60%_50%_at_50%_0%,rgba(16,185,129,0.18),transparent)]" aria-hidden="true" />
+                        <div
+                            className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(60%_50%_at_50%_0%,rgba(56,160,240,0.18),transparent)]"
+                            aria-hidden="true"
+                        />
                         <div className="relative mx-auto max-w-6xl px-4 py-20 md:py-28">
                             <div className="mb-6 flex items-center gap-4">
                                 <img src="/images/dssc-seal.png" alt="Seal of Davao del Sur State College" width={96} height={96} className="size-20 md:size-24" />
@@ -107,7 +111,7 @@ export default function Landing() {
                             </p>
 
                             <div className="mt-8 flex flex-wrap items-center gap-3">
-                                <a href={cta.href} className="inline-flex items-center gap-2 rounded-md bg-emerald-500 px-4 py-2.5 font-medium text-neutral-950 hover:bg-emerald-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300">
+                                <a href={cta.href} className="inline-flex items-center gap-2 rounded-md bg-sky-400 px-4 py-2.5 font-medium text-neutral-950 hover:bg-sky-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-200">
                                     {cta.label}
                                     <ArrowRight className="size-4" aria-hidden="true" />
                                 </a>
@@ -127,7 +131,7 @@ export default function Landing() {
                         <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             {MODULES.map(({ title, text, icon: Icon }) => (
                                 <li key={title} className="rounded-xl border border-white/10 bg-white/3 p-5">
-                                    <Icon className="mb-3 size-5 text-emerald-400" aria-hidden="true" />
+                                    <Icon className="mb-3 size-5 text-sky-400" aria-hidden="true" />
                                     <h3 className="font-medium">{title}</h3>
                                     <p className="mt-1.5 text-sm text-neutral-300">{text}</p>
                                 </li>
@@ -158,7 +162,7 @@ export default function Landing() {
                                 {ROLES.map((role) => (
                                     <li key={role.name} className="rounded-xl border border-white/10 p-5">
                                         <h3 className="flex items-center gap-2 font-medium">
-                                            <KeyRound className="size-4 text-emerald-400" aria-hidden="true" />
+                                            <KeyRound className="size-4 text-sky-400" aria-hidden="true" />
                                             {role.name}
                                         </h3>
                                         <p className="mt-1.5 text-sm text-neutral-300">{role.text}</p>
@@ -170,13 +174,13 @@ export default function Landing() {
 
                     <section id="security" aria-labelledby="security-title" className="mx-auto max-w-6xl px-4 py-16">
                         <h2 id="security-title" className="flex items-center gap-2 text-2xl font-semibold tracking-tight md:text-3xl">
-                            <ShieldCheck className="size-6 text-emerald-400" aria-hidden="true" />
+                            <ShieldCheck className="size-6 text-sky-400" aria-hidden="true" />
                             Built to be safe to run
                         </h2>
                         <ul className="mt-6 grid gap-3 md:grid-cols-2">
                             {SAFEGUARDS.map((item) => (
                                 <li key={item} className="flex gap-3 rounded-lg border border-white/10 p-4 text-sm text-neutral-200">
-                                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-emerald-400" aria-hidden="true" />
+                                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-sky-400" aria-hidden="true" />
                                     {item}
                                 </li>
                             ))}
@@ -212,7 +216,7 @@ export default function Landing() {
 
                     <section className="mx-auto max-w-6xl px-4 py-16 text-center">
                         <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">Ready to look at the network?</h2>
-                        <a href={cta.href} className="mt-6 inline-flex items-center gap-2 rounded-md bg-emerald-500 px-5 py-3 font-medium text-neutral-950 hover:bg-emerald-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300">
+                        <a href={cta.href} className="mt-6 inline-flex items-center gap-2 rounded-md bg-sky-400 px-5 py-3 font-medium text-neutral-950 hover:bg-sky-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-200">
                             {cta.label}
                             <ArrowRight className="size-4" aria-hidden="true" />
                         </a>
