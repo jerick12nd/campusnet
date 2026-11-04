@@ -12,7 +12,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { playAlertSound, primeAlertSound, setSoundEnabled, soundEnabled } from '@/lib/alert-sound';
+import { playAlertSound, primeAlertSound, setSoundEnabled, soundEnabled, type AlertSoundLevel } from '@/lib/alert-sound';
 import { cn } from '@/lib/utils';
 
 type Severity = 'warning' | 'critical';
@@ -185,7 +185,7 @@ function Toast({ item, onClose }: { item: ToastItem; onClose: (key: string) => v
         <div
             role={item.severity === 'critical' ? 'alert' : 'status'}
             className={cn(
-                'pointer-events-auto flex w-[22rem] max-w-[calc(100vw-2rem)] items-start gap-3 rounded-lg border border-l-4 bg-popover p-3 text-popover-foreground shadow-lg',
+                'pointer-events-auto flex w-88 max-w-[calc(100vw-2rem)] items-start gap-3 rounded-lg border border-l-4 bg-popover p-3 text-popover-foreground shadow-lg',
                 'motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-8 motion-safe:duration-300',
                 meta.bar,
             )}
@@ -193,7 +193,7 @@ function Toast({ item, onClose }: { item: ToastItem; onClose: (key: string) => v
             <meta.Icon className={cn('mt-0.5 size-5 shrink-0', meta.text)} aria-hidden="true" />
             <div className="min-w-0 flex-1">
                 <p className={cn('text-xs font-semibold tracking-wide uppercase', meta.text)}>{meta.label} alert</p>
-                <p className="text-sm font-medium break-words">{item.title}</p>
+                <p className="text-sm font-medium wrap-break-word">{item.title}</p>
                 <p className="text-xs text-muted-foreground">{item.detail}</p>
                 <Link href="/alerts" className="mt-1 inline-block text-xs font-medium underline-offset-2 hover:underline">
                     View alerts
@@ -275,7 +275,10 @@ export function AlertBell() {
 
         setToasts((current) => [...items, ...current].slice(0, 4));
 
-        void playAlertSound().then((played) => setBlocked(!played && soundEnabled()));
+        // One sound for the whole batch: the most severe level wins.
+        const level: AlertSoundLevel = fresh.some((alert) => alert.severity === 'critical') ? 'critical' : 'warning';
+
+        void playAlertSound(level).then((played) => setBlocked(!played && soundEnabled()));
     }, [feed]);
 
     const total = feed?.counts.total ?? 0;
@@ -289,8 +292,8 @@ export function AlertBell() {
         setSoundEnabled(next);
     };
 
-    const testSound = () => {
-        void playAlertSound(true).then((played) => setBlocked(!played));
+    const testSound = (level: AlertSoundLevel) => {
+        void playAlertSound(level, true).then((played) => setBlocked(!played));
     };
 
     return (
@@ -343,7 +346,7 @@ export function AlertBell() {
                                         <Link href="/alerts" className="flex cursor-pointer items-start gap-3 py-2">
                                             <meta.Icon className={cn('mt-0.5 size-4 shrink-0', meta.text)} aria-hidden="true" />
                                             <span className="min-w-0 flex-1">
-                                                <span className="block text-sm font-medium break-words">{alert.title}</span>
+                                                <span className="block text-sm font-medium wrap-break-word">{alert.title}</span>
                                                 <span className="block text-xs text-muted-foreground">
                                                     {meta.label} · {alert.device ?? 'Network-wide'} · {ago(alert.triggered_at)}
                                                 </span>
@@ -380,16 +383,26 @@ export function AlertBell() {
                     <DropdownMenuItem
                         onSelect={(event) => {
                             event.preventDefault();
-                            testSound();
+                            testSound('warning');
                         }}
                     >
-                        <Bell className="mr-2" aria-hidden="true" />
-                        Test sound
+                        <TriangleAlert className="mr-2 text-amber-500" aria-hidden="true" />
+                        Test warning sound
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                        onSelect={(event) => {
+                            event.preventDefault();
+                            testSound('critical');
+                        }}
+                    >
+                        <CircleAlert className="mr-2 text-red-500" aria-hidden="true" />
+                        Test critical sound
                     </DropdownMenuItem>
 
                     {blocked && (
                         <p className="px-2 py-1 text-xs text-amber-600 dark:text-amber-400">
-                            The browser blocked the sound. Click &ldquo;Test sound&rdquo; once to allow it.
+                            The browser blocked the sound. Click a &ldquo;Test sound&rdquo; item once to allow it.
                         </p>
                     )}
                 </DropdownMenuContent>
@@ -398,7 +411,7 @@ export function AlertBell() {
             {/* Rendered in <body>: the top bar has a blur effect that would otherwise trap fixed positioning. */}
             {typeof document !== 'undefined' &&
                 createPortal(
-                    <div aria-label="New alerts" className="pointer-events-none fixed top-4 right-4 z-[100] flex flex-col gap-2">
+                    <div aria-label="New alerts" className="pointer-events-none fixed top-4 right-4 z-100 flex flex-col gap-2">
                         {toasts.map((toast) => (
                             <Toast key={toast.key} item={toast} onClose={dismiss} />
                         ))}
