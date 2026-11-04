@@ -1,6 +1,7 @@
 import { usePage } from '@inertiajs/react';
 import { ChevronDown } from 'lucide-react';
 
+import { AlertBell } from '@/components/alert-bell';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -27,7 +28,7 @@ function TopbarUser() {
             <DropdownMenuTrigger asChild>
                 <Button
                     variant="ghost"
-                    className="ml-auto h-auto gap-2 px-2 py-1.5"
+                    className="h-auto gap-2 px-2 py-1.5"
                     aria-label={`Account menu for ${user.name}`}
                     data-test="sidebar-menu-button"
                 >
@@ -49,6 +50,18 @@ function TopbarUser() {
     );
 }
 
+/** Notification bell (only for people who may view alerts) and the account menu, on the right. */
+function HeaderActions() {
+    const permissions = (usePage().props as { access?: { permissions: string[] } }).access?.permissions ?? [];
+
+    return (
+        <div className="ml-auto flex items-center gap-1">
+            {permissions.includes('alerts.view') && <AlertBell />}
+            <TopbarUser />
+        </div>
+    );
+}
+
 export function AppSidebarHeader({
     breadcrumbs = [],
 }: {
@@ -61,7 +74,7 @@ export function AppSidebarHeader({
                 <Breadcrumbs breadcrumbs={breadcrumbs} />
             </div>
 
-            <TopbarUser />
+            <HeaderActions />
         </header>
     );
 }

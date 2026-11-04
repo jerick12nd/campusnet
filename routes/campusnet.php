@@ -15,7 +15,7 @@ use App\Http\Controllers\TvDisplayPairingController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureTvDisplayAccess;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\AlertFeedController;
 /*
 |--------------------------------------------------------------------------
 | CampusNet routes
@@ -63,8 +63,12 @@ Route::middleware('auth')->group(function () {
         ->whereNumber('interface')
         ->middleware('can:interfaces.manage')
         ->name('interfaces.update');
-
-    Route::get('alerts', [AlertController::class, 'index'])
+    
+        Route::get('alerts/feed', [AlertFeedController::class, 'index'])
+        ->middleware(['can:alerts.view', 'throttle:60,1'])
+        ->name('alerts.feed');
+    
+        Route::get('alerts', [AlertController::class, 'index'])
         ->middleware('can:alerts.view')
         ->name('alerts.index');
 
