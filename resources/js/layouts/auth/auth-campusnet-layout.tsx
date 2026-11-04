@@ -42,8 +42,8 @@ export default function AuthCampusnetLayout({
             {/* LEFT: design / branding panel (makita sa dako nga screen) */}
             <div className="relative hidden flex-col items-center justify-center overflow-hidden bg-[linear-gradient(160deg,#0b3270_0%,#071f45_55%,#04122a_100%)] p-10 text-center text-white lg:flex">
                 {/* Soft glows: blue (taas), green (ubos), red (gamay) */}
-                <div className="pointer-events-none absolute -top-32 -left-32 size-[28rem] rounded-full bg-[#2f7be5]/30 blur-3xl" />
-                <div className="pointer-events-none absolute -right-24 -bottom-32 size-[26rem] rounded-full bg-[#4f8a1e]/30 blur-3xl" />
+                <div className="pointer-events-none absolute -top-32 -left-32 size-112 rounded-full bg-[#2f7be5]/30 blur-3xl" />
+                <div className="pointer-events-none absolute -right-24 -bottom-32 size-104 rounded-full bg-[#4f8a1e]/30 blur-3xl" />
                 <div className="pointer-events-none absolute top-1/2 -right-16 size-48 rounded-full bg-[#c8202f]/20 blur-3xl" />
 
                 {/* Tricolor accent bar gikan sa seal */}
