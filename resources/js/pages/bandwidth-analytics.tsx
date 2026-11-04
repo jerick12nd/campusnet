@@ -3,6 +3,8 @@ import { Activity, ArrowDown, ArrowUp, CalendarClock, Gauge, TrendingUp, Triangl
 import { useMemo } from 'react';
 
 import { DailyVolumeChart, UtilizationBars } from '@/components/analytics/analytics-charts';
+import { TrafficLineChart } from '@/components/charts/traffic-line-chart';
+import { UsageRadarChart } from '@/components/charts/usage-radar-chart';
 import { EmptyState } from '@/components/empty-state';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
@@ -166,6 +168,32 @@ export default function BandwidthAnalytics({ analytics }: { analytics: Analytics
                             <p className="mt-2 text-xs text-muted-foreground">
                                 Hours and days are in {timeZone}. The dashed amber line is the warning threshold ({thresholds.warning}%). A missing bar means nothing was measured then.
                             </p>
+                        </section>
+
+                        <section aria-label="Utilization patterns" className="flex flex-col gap-3">
+                            <div>
+                                <h2 className="text-sm font-medium">Utilization patterns</h2>
+                                <p className="text-sm text-muted-foreground">The same measurements as above, drawn as a line and as a 24-hour radar. Times are in {timeZone}.</p>
+                            </div>
+
+                            <div className="grid gap-4 xl:grid-cols-2">
+                                <TrafficLineChart
+                                    title="Utilization by day of week"
+                                    description={periodLabel}
+                                    valueLabel="Average utilization (%)"
+                                    data={weekdayData}
+                                    format={(value) => formatPercent(value)}
+                                    footer="A gap in the line means nothing was measured on that day."
+                                />
+                                <UsageRadarChart
+                                    title="Utilization by hour of day"
+                                    description={`${periodLabel}, 24-hour clock`}
+                                    valueLabel="Average utilization (%)"
+                                    data={hourlyData}
+                                    labelEvery={3}
+                                    footer="An hour with no measurement is drawn at 0 on the radar."
+                                />
+                            </div>
                         </section>
 
                         <section aria-label="Data transferred per day" className="rounded-xl border bg-card p-4 text-card-foreground shadow-xs">

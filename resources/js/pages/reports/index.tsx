@@ -1,7 +1,9 @@
 import { Head, router } from '@inertiajs/react';
 import { Download, FileText, FlaskConical } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
+import { TrafficLineChart, type ChartPoint } from '@/components/charts/traffic-line-chart';
+import { UsageRadarChart } from '@/components/charts/usage-radar-chart';
 import { EmptyState } from '@/components/empty-state';
 import { FlashMessages } from '@/components/flash-messages';
 import { Button } from '@/components/ui/button';
@@ -16,6 +18,9 @@ type Props = {
 
 const SELECT =
     'border-input bg-background h-9 rounded-md border px-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50';
+
+/** The most rows drawn on a chart, so a long preview stays readable. */
+const CHART_ROWS = 24;
 
 /** Local calendar date as YYYY-MM-DD, shifted by a number of days. */
 function dateOffset(days: number): string {
@@ -35,14 +40,56 @@ function formatCell(value: string | number | null): string {
     return String(value);
 }
 
+/** A number, or null when the cell is empty or not numeric (nothing is guessed). */
+function toNumber(cell: string | number | null): number | null {
+    if (cell === null || cell === '') {
+        return null;
+    }
+
+    const value = typeof cell === 'number' ? cell : Number(String(cell).replace(/,/g, ''));
+
+    return Number.isFinite(value) ? value : null;
+}
+
 export default function ReportsIndex({ report, can }: Props) {
     const [type, setType] = useState(report.type);
     const [from, setFrom] = useState(report.from_date);
     const [to, setTo] = useState(report.to_date);
+    const [metric, setMetric] = useState('');
 
     const selected = report.types.find((option) => option.value === type) ?? report.types[0];
     const query = { type, from, to };
     const downloadHref = `/reports/download?${new URLSearchParams(query).toString()}`;
+
+    // Columns (after the first, which labels each row) whose every filled cell is a number.
+    const numericColumns = useMemo(
+        () =>
+            report.columns
+                .map((name, index) => ({ name, index }))
+                .filter(({ index }) => {
+                    if (index === 0) {
+                        return false;
+                    }
+
+                    const values = report.rows.map((row) => row[index] ?? null).filter((cell) => cell !== null && cell !== '');
+
+                    return values.length > 0 && values.every((cell) => toNumber(cell) !== null);
+                }),
+        [report.columns, report.rows],
+    );
+
+    const activeMetric = numericColumns.find((column) => column.name === metric) ?? numericColumns[0];
+
+    const chartPoints: ChartPoint[] = useMemo(() => {
+        if (!activeMetric) {
+            return [];
+        }
+
+        return report.rows.slice(0, CHART_ROWS).map((row) => ({
+            label: formatCell(row[0] ?? null),
+            value: toNumber(row[activeMetric.index] ?? null),
+        }));
+    }, [report.rows, activeMetric]);
 
     const preview = (next: { type?: string; from?: string; to?: string }) => {
         const merged = { type, from, to, ...next };
@@ -209,6 +256,50 @@ export default function ReportsIndex({ report, can }: Props) {
                         </div>
                     )}
                 </section>
+
+                {activeMetric && report.rows.length >= 2 && (
+                    <section id="analytics" aria-label="Report analytics" className="flex flex-col gap-3">
+                        <div className="flex flex-wrap items-end justify-between gap-3">
+                            <div>
+                                <h2 className="text-base font-semibold">Analytics</h2>
+                                <p className="text-sm text-muted-foreground">
+                                    Drawn from the preview rows above (first {Math.min(report.rows.length, CHART_ROWS)}), in the same order as the report.
+                                </p>
+                            </div>
+
+                            <div className="grid gap-1">
+                                <label htmlFor="report-metric" className="text-xs text-muted-foreground">
+                                    Chart column
+                                </label>
+                                <select id="report-metric" className={SELECT} value={activeMetric.name} onChange={(event) => setMetric(event.target.value)}>
+                                    {numericColumns.map((column) => (
+                                        <option key={column.name} value={column.name}>
+                                            {column.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="grid gap-4 xl:grid-cols-2">
+                            <TrafficLineChart
+                                title={activeMetric.name}
+                                description={`${selected.label} · ${report.from_date} to ${report.to_date}`}
+                                valueLabel={activeMetric.name}
+                                data={chartPoints}
+                                footer="An empty cell is left as a gap in the line."
+                            />
+                            <UsageRadarChart
+                                title={activeMetric.name}
+                                description="Radar view of the same rows"
+                                valueLabel={activeMetric.name}
+                                data={chartPoints}
+                                labelEvery={Math.max(1, Math.ceil(chartPoints.length / 8))}
+                                footer="A row with an empty cell is drawn at 0 on the radar."
+                            />
+                        </div>
+                    </section>
+                )}
 
                 <p className="text-xs text-muted-foreground">
                     The file is named <span className="font-mono">{report.filename}</span>. Every export is written to the audit log.
