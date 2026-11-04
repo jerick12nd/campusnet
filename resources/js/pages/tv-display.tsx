@@ -47,6 +47,28 @@ const SLIDES: { id: SlideId; label: string }[] = [
 const DEFAULTS: Settings = { view: 'overview', interval: 5, range: 'hour', hidden: [], slide: 'auto', rotate: 10 };
 const STORAGE_KEY = 'campusnet.tv.settings.v2';
 
+/** How long the old slide takes to leave while the new one arrives. Must match the CSS below. */
+const TRANSITION_MS = 600;
+
+/**
+ * Slide transition: the old slide slides out to the left and fades, the new one slides in from
+ * the right and fades in. With "reduce motion" turned on in the OS it is a plain cross-fade.
+ */
+const TRANSITION_CSS = `
+@keyframes tv-slide-in { from { opacity: 0; transform: translateX(8%) scale(0.98); } to { opacity: 1; transform: none; } }
+@keyframes tv-slide-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateX(-8%) scale(0.98); } }
+@keyframes tv-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes tv-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes tv-progress { from { width: 0; } to { width: 100%; } }
+.tv-slide-in { animation: tv-slide-in ${TRANSITION_MS}ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.tv-slide-out { animation: tv-slide-out ${TRANSITION_MS}ms cubic-bezier(0.22, 1, 0.36, 1) both; pointer-events: none; }
+.tv-progress { animation: tv-progress 10s linear both; }
+@media (prefers-reduced-motion: reduce) {
+    .tv-slide-in { animation-name: tv-fade-in; }
+    .tv-slide-out { animation-name: tv-fade-out; }
+}
+`;
+
 function loadSettings(): Settings {
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -100,6 +122,7 @@ export default function TvDisplay({ initial, can_control }: TvPageProps) {
     const [controlsVisible, setControlsVisible] = useState(false);
     const [fullscreen, setFullscreen] = useState(false);
     const [tick, setTick] = useState(0);
+    const [leaving, setLeaving] = useState<SlideId | null>(null);
 
     const { data, lastOkAt, connection, skewMs } = useTvData(initial, settings.interval, paused);
     const connectionStale = useConnectionStale(lastOkAt, settings.interval, paused);
@@ -135,6 +158,22 @@ export default function TvDisplay({ initial, can_control }: TvPageProps) {
 
         return () => window.clearInterval(id);
     }, [autoRotating, settings.rotate]);
+
+    // Keep the slide that just left on screen for the length of the transition, then drop it.
+    const previousSlide = useRef<SlideId>(activeSlide);
+
+    useEffect(() => {
+        if (previousSlide.current === activeSlide) {
+            return;
+        }
+
+        setLeaving(previousSlide.current);
+        previousSlide.current = activeSlide;
+
+        const id = window.setTimeout(() => setLeaving(null), TRANSITION_MS);
+
+        return () => window.clearTimeout(id);
+    }, [activeSlide]);
 
     // TV remote / keyboard: right = Analytics, left = Overview, up = auto-rotate again.
     useEffect(() => {
@@ -253,9 +292,62 @@ export default function TvDisplay({ initial, can_control }: TvPageProps) {
     const dim = connectionStale || connection !== 'live';
     const timeZone = data?.timezone ?? 'Asia/Manila';
 
+    const renderSlide = (id: SlideId, current: TvData) => {
+        if (id === 'analytics') {
+            return <TvAnalytics data={current} dim={dim} />;
+        }
+
+        return (
+            <>
+                <KpiRow data={current} dim={dim} />
+
+                {showChart && (
+                    <Glass className={cn('flex min-h-0 flex-col p-5', showBottom ? 'flex-[5]' : 'flex-1')}>
+                        <div className="mb-1 text-[1.15rem] font-semibold tracking-wide text-white/70 uppercase">
+                            Live bandwidth · {settings.range === 'hour' ? 'Last hour' : 'Current session (since this display opened)'}
+                        </div>
+                        <div className={cn('min-h-0 flex-1', dim && 'opacity-60')}>
+                            <TvChart
+                                points={settings.range === 'hour' ? hourPoints : session}
+                                timeZone={timeZone}
+                                capacityMbps={current.capacity_mbps}
+                                emptyMessage={
+                                    settings.range === 'hour'
+                                        ? 'Not enough measurements in the last hour to draw a graph yet.'
+                                        : 'Collecting measurements. The graph appears after two samples arrive.'
+                                }
+                            />
+                        </div>
+                    </Glass>
+                )}
+
+                {showBottom && (
+                    <div
+                        className={cn('grid min-h-0 gap-4', showChart ? 'flex-[4]' : 'flex-1')}
+                        style={{ gridTemplateColumns: `repeat(${visiblePanels.length}, minmax(0, 1fr))` }}
+                    >
+                        {visiblePanels.map((panel) => {
+                            switch (panel.id) {
+                                case 'devices':
+                                    return <DevicesPanel key={panel.id} data={current} skewMs={skewMs} />;
+                                case 'alerts':
+                                    return <AlertsPanel key={panel.id} data={current} skewMs={skewMs} />;
+                                case 'health':
+                                    return <HealthPanel key={panel.id} data={current} connection={connection} skewMs={skewMs} />;
+                                case 'events':
+                                    return <EventsPanel key={panel.id} data={current} skewMs={skewMs} />;
+                            }
+                        })}
+                    </div>
+                )}
+            </>
+        );
+    };
+
     return (
         <>
             <Head title="TV Display" />
+            <style>{TRANSITION_CSS}</style>
 
             <div
                 className={cn('fixed inset-0 flex flex-col gap-4 overflow-hidden bg-[#060a13] p-6 text-white', !controlsVisible && 'cursor-none')}
@@ -282,58 +374,16 @@ export default function TvDisplay({ initial, can_control }: TvPageProps) {
                             : 'Connecting to CampusNet…'}
                     </Glass>
                 ) : (
-                    <div
-                        key={activeSlide}
-                        className="flex min-h-0 flex-1 flex-col gap-4 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500"
-                    >
-                        {activeSlide === 'analytics' ? (
-                            <TvAnalytics data={data} dim={dim} />
-                        ) : (
-                            <>
-                                <KpiRow data={data} dim={dim} />
-
-                                {showChart && (
-                                    <Glass className={cn('flex min-h-0 flex-col p-5', showBottom ? 'flex-[5]' : 'flex-1')}>
-                                        <div className="mb-1 text-[1.15rem] font-semibold tracking-wide text-white/70 uppercase">
-                                            Live bandwidth ·{' '}
-                                            {settings.range === 'hour' ? 'Last hour' : 'Current session (since this display opened)'}
-                                        </div>
-                                        <div className={cn('min-h-0 flex-1', dim && 'opacity-60')}>
-                                            <TvChart
-                                                points={settings.range === 'hour' ? hourPoints : session}
-                                                timeZone={timeZone}
-                                                capacityMbps={data.capacity_mbps}
-                                                emptyMessage={
-                                                    settings.range === 'hour'
-                                                        ? 'Not enough measurements in the last hour to draw a graph yet.'
-                                                        : 'Collecting measurements. The graph appears after two samples arrive.'
-                                                }
-                                            />
-                                        </div>
-                                    </Glass>
-                                )}
-
-                                {showBottom && (
-                                    <div
-                                        className={cn('grid min-h-0 gap-4', showChart ? 'flex-[4]' : 'flex-1')}
-                                        style={{ gridTemplateColumns: `repeat(${visiblePanels.length}, minmax(0, 1fr))` }}
-                                    >
-                                        {visiblePanels.map((panel) => {
-                                            switch (panel.id) {
-                                                case 'devices':
-                                                    return <DevicesPanel key={panel.id} data={data} skewMs={skewMs} />;
-                                                case 'alerts':
-                                                    return <AlertsPanel key={panel.id} data={data} skewMs={skewMs} />;
-                                                case 'health':
-                                                    return <HealthPanel key={panel.id} data={data} connection={connection} skewMs={skewMs} />;
-                                                case 'events':
-                                                    return <EventsPanel key={panel.id} data={data} skewMs={skewMs} />;
-                                            }
-                                        })}
-                                    </div>
-                                )}
-                            </>
+                    <div className="relative min-h-0 flex-1">
+                        {leaving !== null && leaving !== activeSlide && (
+                            <div key={`leaving-${leaving}`} aria-hidden="true" className="tv-slide-out absolute inset-0 flex flex-col gap-4">
+                                {renderSlide(leaving, data)}
+                            </div>
                         )}
+
+                        <div key={`active-${activeSlide}`} className="tv-slide-in absolute inset-0 flex flex-col gap-4">
+                            {renderSlide(activeSlide, data)}
+                        </div>
                     </div>
                 )}
 
@@ -347,6 +397,16 @@ export default function TvDisplay({ initial, can_control }: TvPageProps) {
                             </span>
                         ))}
                     </div>
+                )}
+
+                {/* Thin line along the bottom edge that fills up until the next slide. Restarts on every switch. */}
+                {data !== null && autoRotating && (
+                    <div
+                        key={tick}
+                        aria-hidden="true"
+                        className="tv-progress pointer-events-none absolute bottom-0 left-0 h-[0.2rem] bg-sky-400/70"
+                        style={{ animationDuration: `${settings.rotate}s` }}
+                    />
                 )}
 
                 {can_control && controlsVisible && (
