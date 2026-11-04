@@ -1,3 +1,5 @@
+import type { AnalyticsData } from '@/types/campusnet';
+
 export type Severity = 'info' | 'warning' | 'critical';
 export type DeviceState = 'online' | 'unreachable' | 'unknown';
 export type CollectorState = 'ok' | 'no_devices' | 'no_data' | 'stale' | 'misconfigured';
@@ -22,6 +24,12 @@ export type TvAlert = {
     triggered_at: string;
     resolved_at: string | null;
 };
+
+/** The parts of the Bandwidth Analytics page that the wallboard shows (slide 2). */
+export type TvAnalytics = Pick<
+    AnalyticsData,
+    'range' | 'days' | 'to' | 'has_data' | 'summary' | 'hourly' | 'weekday' | 'daily' | 'busiest' | 'top_interfaces'
+> & { wan: { configured: boolean } };
 
 export type TvData = {
     generated_at: string;
@@ -71,6 +79,8 @@ export type TvData = {
         list: TvAlert[];
     };
     events: TvAlert[];
+    /** null when the analytics could not be built; the wallboard then shows slide 1 only. */
+    analytics: TvAnalytics | null;
 };
 
 export type TvPageProps = {

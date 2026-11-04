@@ -7,16 +7,25 @@ namespace App\Services;
 use App\Enums\AlertType;
 use App\Models\NetworkAlert;
 use App\Monitoring\MonitoringManager;
+use Illuminate\Support\Facades\Cache;
+use Throwable;
 
 /**
- * Payload for the TV wallboard. It reuses DashboardService (same data, same demo/real rules)
- * and returns only what the screen shows. Nothing sensitive is selected: no IP addresses,
- * no SNMP credentials, no user data.
+ * Payload for the TV wallboard. It reuses DashboardService and BandwidthAnalyticsService
+ * (same data, same demo/real rules) and returns only what the screen shows. Nothing
+ * sensitive is selected: no IP addresses, no SNMP credentials, no user data.
  */
 final class TvDashboardService
 {
+    /** The analytics slide covers the last 7 days. */
+    private const ANALYTICS_RANGE = '7d';
+
+    /** The analytics queries scan days of samples, so they are cached; the live data is not. */
+    private const ANALYTICS_CACHE_SECONDS = 60;
+
     public function __construct(
         private readonly DashboardService $dashboard,
+        private readonly BandwidthAnalyticsService $analytics,
         private readonly MonitoringManager $monitoring,
         private readonly SettingsService $settings,
     ) {}
@@ -67,6 +76,42 @@ final class TvDashboardService
                 'list' => $this->openAlerts($source),
             ],
             'events' => $this->events($source),
+            'analytics' => $this->analytics($source),
+        ];
+    }
+
+    /**
+     * Slide 2 of the wallboard. If the analytics cannot be built, the wallboard keeps
+     * working and simply has no analytics slide (null), instead of failing as a whole.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function analytics(string $source): ?array
+    {
+        try {
+            $data = Cache::remember(
+                'tv-display:analytics:'.$source.':'.self::ANALYTICS_RANGE,
+                self::ANALYTICS_CACHE_SECONDS,
+                fn (): array => $this->analytics->build(self::ANALYTICS_RANGE),
+            );
+        } catch (Throwable $e) {
+            report($e);
+
+            return null;
+        }
+
+        return [
+            'range' => $data['range'],
+            'days' => $data['days'],
+            'to' => $data['to'],
+            'wan' => ['configured' => $data['wan']['configured']],
+            'has_data' => $data['has_data'],
+            'summary' => $data['summary'],
+            'hourly' => $data['hourly'],
+            'weekday' => $data['weekday'],
+            'daily' => $data['daily'],
+            'busiest' => $data['busiest'],
+            'top_interfaces' => $data['top_interfaces'],
         ];
     }
 

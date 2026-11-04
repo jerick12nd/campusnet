@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { TvAnalytics } from '@/components/tv/tv-analytics';
 import { TvChart, type ChartPoint } from '@/components/tv/tv-chart';
 import {
     AlertsPanel,
@@ -25,10 +26,25 @@ const PANELS = [
 
 type PanelId = (typeof PANELS)[number]['id'];
 type ViewId = 'overview' | 'traffic' | 'devices';
-type Settings = { view: ViewId; interval: number; range: 'hour' | 'session'; hidden: PanelId[] };
+type SlideId = 'overview' | 'analytics';
+type SlideChoice = 'auto' | SlideId;
+type Settings = {
+    view: ViewId;
+    interval: number;
+    range: 'hour' | 'session';
+    hidden: PanelId[];
+    slide: SlideChoice;
+    rotate: number;
+};
 
 const INTERVALS = [3, 5, 10, 15, 30, 60]; // safe limits: never faster than 3 s
-const DEFAULTS: Settings = { view: 'overview', interval: 5, range: 'hour', hidden: [] };
+const ROTATIONS = [10, 15, 20, 30, 60]; // seconds each slide stays on screen in auto mode
+const SLIDE_CHOICES: SlideChoice[] = ['auto', 'overview', 'analytics'];
+const SLIDES: { id: SlideId; label: string }[] = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'analytics', label: 'Analytics' },
+];
+const DEFAULTS: Settings = { view: 'overview', interval: 5, range: 'hour', hidden: [], slide: 'auto', rotate: 20 };
 const STORAGE_KEY = 'campusnet.tv.settings';
 
 function loadSettings(): Settings {
@@ -38,7 +54,12 @@ function loadSettings(): Settings {
         if (raw) {
             const saved = { ...DEFAULTS, ...JSON.parse(raw) } as Settings;
 
-            return { ...saved, interval: INTERVALS.includes(saved.interval) ? saved.interval : DEFAULTS.interval };
+            return {
+                ...saved,
+                interval: INTERVALS.includes(saved.interval) ? saved.interval : DEFAULTS.interval,
+                rotate: ROTATIONS.includes(saved.rotate) ? saved.rotate : DEFAULTS.rotate,
+                slide: SLIDE_CHOICES.includes(saved.slide) ? saved.slide : DEFAULTS.slide,
+            };
         }
     } catch {
         // storage unavailable (private mode, some TV browsers): use defaults
@@ -78,6 +99,7 @@ export default function TvDisplay({ initial, can_control }: TvPageProps) {
     const [paused, setPaused] = useState(false);
     const [controlsVisible, setControlsVisible] = useState(false);
     const [fullscreen, setFullscreen] = useState(false);
+    const [tick, setTick] = useState(0);
 
     const { data, lastOkAt, connection, skewMs } = useTvData(initial, settings.interval, paused);
     const connectionStale = useConnectionStale(lastOkAt, settings.interval, paused);
@@ -96,6 +118,41 @@ export default function TvDisplay({ initial, can_control }: TvPageProps) {
             return next;
         });
     };
+
+    // Slides: auto mode alternates Overview and Analytics. Analytics only joins the rotation
+    // when there is real analytics data, so an empty slide is never shown on its own.
+    const hasAnalytics = Boolean(data?.analytics?.has_data);
+    const rotation: SlideId[] = hasAnalytics ? ['overview', 'analytics'] : ['overview'];
+    const activeSlide: SlideId = settings.slide === 'auto' ? rotation[tick % rotation.length] : settings.slide;
+    const autoRotating = settings.slide === 'auto' && rotation.length > 1 && !paused;
+
+    useEffect(() => {
+        if (!autoRotating) {
+            return;
+        }
+
+        const id = window.setInterval(() => setTick((value) => value + 1), settings.rotate * 1000);
+
+        return () => window.clearInterval(id);
+    }, [autoRotating, settings.rotate]);
+
+    // TV remote / keyboard: right = Analytics, left = Overview, up = auto-rotate again.
+    useEffect(() => {
+        const onKey = (event: KeyboardEvent) => {
+            if (event.key === 'ArrowRight') {
+                update({ slide: 'analytics' });
+            } else if (event.key === 'ArrowLeft') {
+                update({ slide: 'overview' });
+            } else if (event.key === 'ArrowUp') {
+                update({ slide: 'auto' });
+            }
+        };
+
+        window.addEventListener('keydown', onKey);
+
+        return () => window.removeEventListener('keydown', onKey);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Scale everything with the screen: 1920x1080 -> 16px, 3840x2160 -> 32px. Tailwind rem classes follow.
     useEffect(() => {
@@ -225,57 +282,78 @@ export default function TvDisplay({ initial, can_control }: TvPageProps) {
                             : 'Connecting to CampusNet…'}
                     </Glass>
                 ) : (
-                    <>
-                        <KpiRow data={data} dim={dim} />
+                    <div
+                        key={activeSlide}
+                        className="flex min-h-0 flex-1 flex-col gap-4 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500"
+                    >
+                        {activeSlide === 'analytics' ? (
+                            <TvAnalytics data={data} dim={dim} />
+                        ) : (
+                            <>
+                                <KpiRow data={data} dim={dim} />
 
-                        {showChart && (
-                            <Glass className={cn('flex min-h-0 flex-col p-5', showBottom ? 'flex-[5]' : 'flex-1')}>
-                                <div className="mb-1 text-[1.15rem] font-semibold tracking-wide text-white/70 uppercase">
-                                    Live bandwidth ·{' '}
-                                    {settings.range === 'hour' ? 'Last hour' : 'Current session (since this display opened)'}
-                                </div>
-                                <div className={cn('min-h-0 flex-1', dim && 'opacity-60')}>
-                                    <TvChart
-                                        points={settings.range === 'hour' ? hourPoints : session}
-                                        timeZone={timeZone}
-                                        capacityMbps={data.capacity_mbps}
-                                        emptyMessage={
-                                            settings.range === 'hour'
-                                                ? 'Not enough measurements in the last hour to draw a graph yet.'
-                                                : 'Collecting measurements. The graph appears after two samples arrive.'
-                                        }
-                                    />
-                                </div>
-                            </Glass>
-                        )}
+                                {showChart && (
+                                    <Glass className={cn('flex min-h-0 flex-col p-5', showBottom ? 'flex-5' : 'flex-1')}>
+                                        <div className="mb-1 text-[1.15rem] font-semibold tracking-wide text-white/70 uppercase">
+                                            Live bandwidth ·{' '}
+                                            {settings.range === 'hour' ? 'Last hour' : 'Current session (since this display opened)'}
+                                        </div>
+                                        <div className={cn('min-h-0 flex-1', dim && 'opacity-60')}>
+                                            <TvChart
+                                                points={settings.range === 'hour' ? hourPoints : session}
+                                                timeZone={timeZone}
+                                                capacityMbps={data.capacity_mbps}
+                                                emptyMessage={
+                                                    settings.range === 'hour'
+                                                        ? 'Not enough measurements in the last hour to draw a graph yet.'
+                                                        : 'Collecting measurements. The graph appears after two samples arrive.'
+                                                }
+                                            />
+                                        </div>
+                                    </Glass>
+                                )}
 
-                        {showBottom && (
-                            <div
-                                className={cn('grid min-h-0 gap-4', showChart ? 'flex-[4]' : 'flex-1')}
-                                style={{ gridTemplateColumns: `repeat(${visiblePanels.length}, minmax(0, 1fr))` }}
-                            >
-                                {visiblePanels.map((panel) => {
-                                    switch (panel.id) {
-                                        case 'devices':
-                                            return <DevicesPanel key={panel.id} data={data} skewMs={skewMs} />;
-                                        case 'alerts':
-                                            return <AlertsPanel key={panel.id} data={data} skewMs={skewMs} />;
-                                        case 'health':
-                                            return <HealthPanel key={panel.id} data={data} connection={connection} skewMs={skewMs} />;
-                                        case 'events':
-                                            return <EventsPanel key={panel.id} data={data} skewMs={skewMs} />;
-                                    }
-                                })}
-                            </div>
+                                {showBottom && (
+                                    <div
+                                        className={cn('grid min-h-0 gap-4', showChart ? 'flex-4' : 'flex-1')}
+                                        style={{ gridTemplateColumns: `repeat(${visiblePanels.length}, minmax(0, 1fr))` }}
+                                    >
+                                        {visiblePanels.map((panel) => {
+                                            switch (panel.id) {
+                                                case 'devices':
+                                                    return <DevicesPanel key={panel.id} data={data} skewMs={skewMs} />;
+                                                case 'alerts':
+                                                    return <AlertsPanel key={panel.id} data={data} skewMs={skewMs} />;
+                                                case 'health':
+                                                    return <HealthPanel key={panel.id} data={data} connection={connection} skewMs={skewMs} />;
+                                                case 'events':
+                                                    return <EventsPanel key={panel.id} data={data} skewMs={skewMs} />;
+                                            }
+                                        })}
+                                    </div>
+                                )}
+                            </>
                         )}
-                    </>
+                    </div>
+                )}
+
+                {/* Which slide is showing. It sits in the bottom padding, so it never shifts the layout. */}
+                {data !== null && (
+                    <div aria-hidden="true" className="pointer-events-none absolute bottom-[0.4rem] left-1/2 flex -translate-x-1/2 items-center gap-5 text-[0.8rem]">
+                        {SLIDES.map((slide) => (
+                            <span key={slide.id} className={cn('flex items-center gap-1.5', activeSlide === slide.id ? 'text-white' : 'text-white/35')}>
+                                <span className={cn('size-2 rounded-full', activeSlide === slide.id ? 'bg-sky-400' : 'bg-white/30')} />
+                                {slide.label}
+                            </span>
+                        ))}
+                    </div>
                 )}
 
                 {can_control && controlsVisible && (
                     <div
                         role="toolbar"
                         aria-label="Display controls"
-                        className="fixed top-4 right-4 z-50 w-[26rem] space-y-3 rounded-[1.2rem] border border-white/15 bg-[#0b1220]/95 p-4 text-[1rem] shadow-2xl"
+                        className="fixed top-4 right-4 z-50 w-104 space-y-3 rounded-[1.2rem] border border-white/15 bg-[#0b1220]/95 p-4 text-[1rem] shadow-2xl"
                     >
                         <div className="flex gap-2">
                             <Btn onClick={() => void toggleFullscreen()}>{fullscreen ? 'Exit full screen' : 'Full screen'}</Btn>
@@ -284,7 +362,25 @@ export default function TvDisplay({ initial, can_control }: TvPageProps) {
                             </Btn>
                         </div>
 
-                        <Row label="View">
+                        <Row label="Slide">
+                            {SLIDE_CHOICES.map((id) => (
+                                <Btn key={id} active={settings.slide === id} onClick={() => update({ slide: id })}>
+                                    {id === 'auto' ? 'Auto-rotate' : id === 'overview' ? 'Overview' : 'Analytics'}
+                                </Btn>
+                            ))}
+                        </Row>
+
+                        {settings.slide === 'auto' && (
+                            <Row label="Rotate every">
+                                {ROTATIONS.map((seconds) => (
+                                    <Btn key={seconds} active={settings.rotate === seconds} onClick={() => update({ rotate: seconds })}>
+                                        {seconds}s
+                                    </Btn>
+                                ))}
+                            </Row>
+                        )}
+
+                        <Row label="Overview layout">
                             {(['overview', 'traffic', 'devices'] as const).map((id) => (
                                 <Btn key={id} active={view === id} onClick={() => update({ view: id })}>
                                     {id[0].toUpperCase() + id.slice(1)}
