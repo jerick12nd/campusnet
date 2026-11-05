@@ -6,6 +6,7 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { NotificationSoundMenu } from '@/components/notification-sound-menu';
 import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { logout } from '@/routes';
@@ -19,10 +20,11 @@ type Props = {
 export function UserMenuContent({ user }: Props) {
     const cleanup = useMobileNavigation();
     const { access } = usePage<{ access?: { permissions: string[] } }>().props;
+    const permissions = access?.permissions ?? [];
 
-    // CampusNet system settings (campus name, time zone, thresholds). The server still
-    // authorizes the page; this only decides whether the menu item is shown.
-    const canViewSystemSettings = (access?.permissions ?? []).includes('settings.view');
+    // The server still authorizes every page; these only decide whether the menu item is shown.
+    const canViewSystemSettings = permissions.includes('settings.view');
+    const canHearAlerts = permissions.includes('alerts.view');
 
     const handleLogout = () => {
         cleanup();
@@ -64,6 +66,8 @@ export function UserMenuContent({ user }: Props) {
                         </Link>
                     </DropdownMenuItem>
                 )}
+
+                {canHearAlerts && <NotificationSoundMenu />}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>

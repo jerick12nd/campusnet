@@ -114,10 +114,14 @@ Route::middleware('auth')->group(function () {
         ->name('audit-logs.index');
 
     // TV display access management (Super Administrator only).
-    Route::get('tv-displays', [TvDisplayAdminController::class, 'index'])
-        ->middleware('can:tv-display.manage')
-        ->name('tv-displays.index');
+   Route::get('settings/tv-display', [TvDisplayAdminController::class, 'index'])
+    ->middleware('can:tv-display.manage')
+    ->name('tv-displays.index');
 
+
+     Route::get('tv-displays', fn () => to_route('tv-displays.index'))
+    ->middleware('can:tv-display.manage');
+    
     Route::post('tv-displays', [TvDisplayAdminController::class, 'store'])
         ->middleware(['can:tv-display.manage', 'throttle:10,1'])
         ->name('tv-displays.store');

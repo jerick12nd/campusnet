@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { Bell, BellRing, CircleAlert, TriangleAlert, Volume2, VolumeX, X } from 'lucide-react';
+import { Bell, BellRing, CircleAlert, TriangleAlert, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -12,7 +12,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { playAlertSound, primeAlertSound, setSoundEnabled, soundEnabled, type AlertSoundLevel } from '@/lib/alert-sound';
+import { playAlertSound, primeAlertSound, type AlertSoundLevel } from '@/lib/alert-sound';
 import { cn } from '@/lib/utils';
 
 type Severity = 'warning' | 'critical';
@@ -216,8 +216,6 @@ function Toast({ item, onClose }: { item: ToastItem; onClose: (key: string) => v
 export function AlertBell() {
     const { feed, failed } = useAlertFeed();
     const [toasts, setToasts] = useState<ToastItem[]>([]);
-    const [soundOn, setSoundOn] = useState<boolean>(soundEnabled);
-    const [blocked, setBlocked] = useState(false);
 
     const dismiss = useCallback((key: string) => setToasts((current) => current.filter((toast) => toast.key !== key)), []);
 
@@ -278,23 +276,13 @@ export function AlertBell() {
         // One sound for the whole batch: the most severe level wins.
         const level: AlertSoundLevel = fresh.some((alert) => alert.severity === 'critical') ? 'critical' : 'warning';
 
-        void playAlertSound(level).then((played) => setBlocked(!played && soundEnabled()));
+        // Which sound plays (and whether any does) is set in the profile menu: Notification sounds.
+        void playAlertSound(level);
     }, [feed]);
 
     const total = feed?.counts.total ?? 0;
     const critical = feed?.counts.critical ?? 0;
     const alerts = feed?.alerts ?? [];
-
-    const toggleSound = () => {
-        const next = !soundOn;
-
-        setSoundOn(next);
-        setSoundEnabled(next);
-    };
-
-    const testSound = (level: AlertSoundLevel) => {
-        void playAlertSound(level, true).then((played) => setBlocked(!played));
-    };
 
     return (
         <>
@@ -369,42 +357,6 @@ export function AlertBell() {
                             View all alerts
                         </Link>
                     </DropdownMenuItem>
-
-                    <DropdownMenuItem
-                        onSelect={(event) => {
-                            event.preventDefault();
-                            toggleSound();
-                        }}
-                    >
-                        {soundOn ? <Volume2 className="mr-2" aria-hidden="true" /> : <VolumeX className="mr-2" aria-hidden="true" />}
-                        Alert sound: {soundOn ? 'on' : 'off'}
-                    </DropdownMenuItem>
-
-                    <DropdownMenuItem
-                        onSelect={(event) => {
-                            event.preventDefault();
-                            testSound('warning');
-                        }}
-                    >
-                        <TriangleAlert className="mr-2 text-amber-500" aria-hidden="true" />
-                        Test warning sound
-                    </DropdownMenuItem>
-
-                    <DropdownMenuItem
-                        onSelect={(event) => {
-                            event.preventDefault();
-                            testSound('critical');
-                        }}
-                    >
-                        <CircleAlert className="mr-2 text-red-500" aria-hidden="true" />
-                        Test critical sound
-                    </DropdownMenuItem>
-
-                    {blocked && (
-                        <p className="px-2 py-1 text-xs text-amber-600 dark:text-amber-400">
-                            The browser blocked the sound. Click a &ldquo;Test sound&rdquo; item once to allow it.
-                        </p>
-                    )}
                 </DropdownMenuContent>
             </DropdownMenu>
 

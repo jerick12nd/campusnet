@@ -23,7 +23,7 @@ class TvDisplayAdminController extends Controller
             $displays->create('Default TV Display', $request->user(), true);
         }
 
-        return Inertia::render('tv-displays/index', [
+        return Inertia::render('settings/tv-display', [
             'displays' => TvDisplay::query()->latest()->get()->map(fn (TvDisplay $display): array => [
                 'id' => $display->id,
                 'name' => $display->name,
