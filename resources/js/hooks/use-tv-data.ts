@@ -6,6 +6,49 @@ export type Connection = 'live' | 'retrying' | 'unauthorized';
 
 const REQUEST_TIMEOUT_MS = 10_000;
 
+/** The TV's clock and the server's never match exactly. A smaller change is noise, not news. */
+const SKEW_TOLERANCE_MS = 1_500;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Returns `next`, but keeps the OLD object for every part that did not change.
+ *
+ * Every response is a brand new object, even when only `generated_at` moved. With this, the
+ * history, the device list and so on keep the same identity, so React can skip the panels that
+ * show them (the React Compiler does that by comparing props) instead of redrawing all of them
+ * every few seconds on a weak TV box.
+ */
+function share<T>(previous: unknown, next: T): T {
+    if (previous === next) {
+        return next;
+    }
+
+    if (Array.isArray(previous) && Array.isArray(next)) {
+        const merged = next.map((item, index) => share(previous[index], item));
+        const same = merged.length === previous.length && merged.every((item, index) => item === previous[index]);
+
+        return (same ? previous : merged) as T;
+    }
+
+    if (isRecord(previous) && isRecord(next)) {
+        const keys = Object.keys(next);
+        const merged: Record<string, unknown> = {};
+        let same = keys.length === Object.keys(previous).length;
+
+        for (const key of keys) {
+            merged[key] = share(previous[key], next[key]);
+            same &&= merged[key] === previous[key];
+        }
+
+        return (same ? previous : merged) as T;
+    }
+
+    return next;
+}
+
 /**
  * Polls the TV data endpoint with ONE timer chain (never setInterval), so requests cannot pile up.
  * A failed cycle keeps the previous data untouched: nothing is invented to fill the gap.
@@ -25,6 +68,7 @@ export function useTvData(initial: TvData | null, intervalSeconds: number, pause
         }
 
         let cancelled = false;
+        let inFlight = false;
         let timer: ReturnType<typeof setTimeout> | undefined;
         let controller: AbortController | undefined;
         const interval = intervalSeconds * 1000;
@@ -38,10 +82,13 @@ export function useTvData(initial: TvData | null, intervalSeconds: number, pause
         };
 
         const run = async () => {
-            if (cancelled || document.hidden) {
-                return; // resumed by the visibilitychange handler below
+            // Never start a second request while one is running: a wake-up (tab visible again,
+            // network back) during a request would otherwise start a second timer chain for good.
+            if (cancelled || document.hidden || inFlight) {
+                return; // a hidden page is resumed by the wake-up handler below
             }
 
+            inFlight = true;
             controller = new AbortController();
             const abortTimer = setTimeout(() => controller?.abort(), REQUEST_TIMEOUT_MS);
 
@@ -77,9 +124,13 @@ export function useTvData(initial: TvData | null, intervalSeconds: number, pause
 
                 failures.current = 0;
                 lastOkRef.current = Date.now();
-                setData(next);
+                setData((current) => (current === null ? next : share(current, next)));
                 setLastOkAt(lastOkRef.current);
-                setSkewMs(Date.parse(next.generated_at) - Date.now() || 0);
+
+                const skew = Date.parse(next.generated_at) - Date.now();
+
+                // Only a real clock difference changes the state, so network jitter does not redraw the clock panels.
+                setSkewMs((current) => (Number.isNaN(skew) || Math.abs(skew - current) < SKEW_TOLERANCE_MS ? current : skew));
                 setConnection('live');
                 schedule(interval);
             } catch {
@@ -91,18 +142,21 @@ export function useTvData(initial: TvData | null, intervalSeconds: number, pause
                 setConnection('retrying');
                 schedule(Math.min(30_000, interval * 2 ** Math.min(failures.current, 4)));
             } finally {
+                inFlight = false;
                 clearTimeout(abortTimer);
             }
         };
 
-        const onVisibility = () => {
+        // The tab came back, or the network did: ask now instead of waiting out the timer.
+        const wakeUp = () => {
             if (!document.hidden) {
                 clearTimeout(timer);
                 void run();
             }
         };
 
-        document.addEventListener('visibilitychange', onVisibility);
+        document.addEventListener('visibilitychange', wakeUp);
+        window.addEventListener('online', wakeUp);
 
         // Wait out whatever is left of the interval since the last good update (first paint already has fresh data).
         const sinceOk = lastOkRef.current === null ? Infinity : Date.now() - lastOkRef.current;
@@ -112,21 +166,44 @@ export function useTvData(initial: TvData | null, intervalSeconds: number, pause
             cancelled = true;
             clearTimeout(timer);
             controller?.abort();
-            document.removeEventListener('visibilitychange', onVisibility);
+            document.removeEventListener('visibilitychange', wakeUp);
+            window.removeEventListener('online', wakeUp);
         };
     }, [intervalSeconds, paused]);
 
     return { data, lastOkAt, connection, skewMs };
 }
 
+// One shared timer per interval. Every clock and "x s ago" label that asks for the same interval is
+// updated in the same tick, so React draws them in ONE render instead of one render per component.
+const tickers = new Map<number, { listeners: Set<() => void>; id: ReturnType<typeof setInterval> }>();
+
+function subscribeTick(intervalMs: number, listener: () => void): () => void {
+    let ticker = tickers.get(intervalMs);
+
+    if (!ticker) {
+        const listeners = new Set<() => void>();
+
+        ticker = { listeners, id: setInterval(() => listeners.forEach((notify) => notify()), intervalMs) };
+        tickers.set(intervalMs, ticker);
+    }
+
+    ticker.listeners.add(listener);
+
+    return () => {
+        ticker.listeners.delete(listener);
+
+        if (ticker.listeners.size === 0) {
+            clearInterval(ticker.id);
+            tickers.delete(intervalMs);
+        }
+    };
+}
+
 export function useNow(intervalMs = 1000): number {
     const [now, setNow] = useState(() => Date.now());
 
-    useEffect(() => {
-        const id = setInterval(() => setNow(Date.now()), intervalMs);
-
-        return () => clearInterval(id);
-    }, [intervalMs]);
+    useEffect(() => subscribeTick(intervalMs, () => setNow(Date.now())), [intervalMs]);
 
     return now;
 }
