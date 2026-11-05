@@ -65,38 +65,38 @@ export function TvChart({
 
     if (model === null) {
         return (
-            <div className="flex h-full items-center justify-center text-[1.4rem] text-white/60">{emptyMessage}</div>
+            <div className="flex h-full items-center justify-center p-4 text-center text-[1.3rem] text-white/60">{emptyMessage}</div>
         );
     }
 
     return (
         <div className="relative flex h-full min-h-0 flex-col">
-            <div className="absolute top-0 right-0 z-10 flex gap-6 text-[1.1rem] text-white/80">
+            <div className="flex shrink-0 flex-wrap justify-end gap-x-6 gap-y-1 pb-[0.4rem] text-[1rem] text-white/80">
                 <span className="flex items-center gap-2">
-                    <span className="inline-block h-[0.3rem] w-[2rem] rounded" style={{ background: IN_COLOR }} />
+                    <span className="inline-block h-[0.3rem] w-8 rounded" style={{ background: IN_COLOR }} />
                     Download (in)
                 </span>
                 <span className="flex items-center gap-2">
                     <span
-                        className="inline-block h-0 w-[2rem] border-t-[0.3rem] border-dashed"
+                        className="inline-block h-0 w-8 border-t-[0.3rem] border-dashed"
                         style={{ borderColor: OUT_COLOR }}
                     />
                     Upload (out)
                 </span>
                 {model.capacityY !== null && (
                     <span className="flex items-center gap-2 text-amber-300">
-                        <span className="inline-block h-0 w-[2rem] border-t-[0.15rem] border-dotted border-amber-300" />
+                        <span className="inline-block h-0 w-8 border-t-[0.15rem] border-dotted border-amber-300" />
                         Capacity
                     </span>
                 )}
             </div>
 
-            <div className="flex min-h-0 flex-1 pt-[2rem]">
-                <div className="relative w-[7rem] shrink-0">
+            <div className="flex min-h-0 flex-1">
+                <div className="relative w-24 shrink-0">
                     {[0, 1, 2, 3, 4].map((i) => (
                         <span
                             key={i}
-                            className="absolute right-3 -translate-y-1/2 text-[1rem] whitespace-nowrap text-white/60 tabular-nums"
+                            className="absolute right-3 -translate-y-1/2 text-[0.9rem] whitespace-nowrap text-white/60 tabular-nums"
                             style={{ top: `${100 - i * 25}%` }}
                         >
                             {axisLabel((model.yMax * i) / 4, model.yMax)}
@@ -166,7 +166,7 @@ export function TvChart({
                 </div>
             </div>
 
-            <div className="relative ml-[7rem] h-[2rem] shrink-0">
+            <div className="relative ml-24 h-[1.8rem] shrink-0">
                 {model.xTicks.map((ts, i) => (
                     <span
                         key={i}
