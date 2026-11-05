@@ -76,7 +76,7 @@ function UtilBars({
                                     style={{ height: `${Math.max(1, (item.value / scaleMax) * 100)}%` }}
                                 >
                                     {showValues && (
-                                        <span className="absolute -top-[1.5rem] left-1/2 -translate-x-1/2 text-[1rem] font-semibold whitespace-nowrap tabular-nums">
+                                        <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[1rem] font-semibold whitespace-nowrap tabular-nums">
                                             {formatPercent(item.value)}
                                         </span>
                                     )}
@@ -191,7 +191,7 @@ export function TvAnalytics({ data, dim }: { data: TvData; dim: boolean }) {
                 <Tile title="Uploaded" value={formatVolume(summary.transferred.out_mb)} hint={`Last ${analytics.days} days`} icon={ArrowUp} dim={dim} />
             </div>
 
-            <div className="grid min-h-0 flex-[5] grid-cols-[1.5fr_1fr_1fr] gap-4">
+            <div className="grid min-h-0 flex-5 grid-cols-[1.5fr_1fr_1fr] gap-4">
                 <Glass className="flex min-h-0 flex-col p-5">
                     <Title>Utilization by hour of day</Title>
                     <div className="min-h-0 flex-1">
@@ -212,7 +212,7 @@ export function TvAnalytics({ data, dim }: { data: TvData; dim: boolean }) {
                 </Glass>
             </div>
 
-            <div className="grid min-h-0 flex-[3] grid-cols-[2fr_1fr] gap-4">
+            <div className="grid min-h-0 flex-3 grid-cols-[2fr_1fr] gap-4">
                 <Glass className="flex min-h-0 flex-col overflow-hidden p-5">
                     <Title>Busiest interfaces by data volume</Title>
                     {topInterfaces.length === 0 ? (
