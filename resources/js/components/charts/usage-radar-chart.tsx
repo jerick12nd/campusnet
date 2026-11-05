@@ -26,7 +26,7 @@ export function UsageRadarChart({ title, description, valueLabel, data, labelEve
             {description && <p className="text-center text-sm text-muted-foreground">{description}</p>}
 
             {usable ? (
-                <div className="mx-auto mt-2 h-[300px] w-full max-w-[380px]">
+                <div className="mx-auto mt-2 h-75 w-full max-w-95">
                     <ResponsiveContainer width="100%" height="100%">
                         <RadarChart data={points}>
                             <Tooltip cursor={false} content={<ChartTip valueLabel={valueLabel} format={format} />} />
