@@ -30,9 +30,9 @@
             }
         </style>
 
-        <link rel="icon" href="/favicon.ico" sizes="any">
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        {{-- DSSC seal as the browser tab icon. Change ?v=2 to ?v=3 (and so on) to force browsers to reload it. --}}
+        <link rel="icon" type="image/png" href="/images/dssc-seal.png?v=2">
+        <link rel="apple-touch-icon" href="/images/dssc-seal.png?v=2">
 
         @fonts
 
