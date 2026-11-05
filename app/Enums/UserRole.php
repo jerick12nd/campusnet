@@ -35,6 +35,7 @@ enum UserRole: string
             'traffic.view',
             'alerts.view',
             'reports.view',
+            'tv-display.view',
         ];
 
         $operating = [
@@ -54,11 +55,8 @@ enum UserRole: string
                 'settings.manage',
                 'users.manage',
                 'audit.view',
+                'tv-display.manage',
             ],
-
-
-
-            
         };
     }
 
