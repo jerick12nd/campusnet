@@ -1,11 +1,13 @@
-import { Head, router } from '@inertiajs/react';
-import { Search, Users } from 'lucide-react';
+import { Head, router, useForm } from '@inertiajs/react';
+import { Check, Copy, Eye, EyeOff, KeyRound, Plus, Search, Users } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import type { FormEvent } from 'react';
 
 import { EmptyState } from '@/components/empty-state';
 import { FlashMessages } from '@/components/flash-messages';
 import { Pill } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
 import { formatDateTime, timeAgo } from '@/lib/format';
@@ -22,6 +24,190 @@ const SELECT =
     'border-input bg-background h-9 rounded-md border px-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50';
 
 const RELOAD = ['users', 'filters', 'stats'];
+
+/** A random password that always has upper case, lower case, a digit and a symbol (no look-alike characters). */
+function generatePassword(length = 14): string {
+    const sets = ['ABCDEFGHJKLMNPQRSTUVWXYZ', 'abcdefghijkmnopqrstuvwxyz', '23456789', '!@#$%&*?'];
+    const all = sets.join('');
+    const random = (max: number) => crypto.getRandomValues(new Uint32Array(1))[0] % max;
+    const pick = (chars: string) => chars[random(chars.length)];
+
+    const chars = sets.map(pick);
+
+    while (chars.length < length) {
+        chars.push(pick(all));
+    }
+
+    for (let i = chars.length - 1; i > 0; i--) {
+        const j = random(i + 1);
+
+        [chars[i], chars[j]] = [chars[j], chars[i]];
+    }
+
+    return chars.join('');
+}
+
+/** "Add account" button and the form it opens. Only a Super Administrator reaches this page. */
+function AddAccount({ roles }: { roles: Option[] }) {
+    const defaultRole = roles.find((role) => role.value === 'viewer')?.value ?? roles[0]?.value ?? 'viewer';
+
+    const [open, setOpen] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [copied, setCopied] = useState(false);
+    const form = useForm({ name: '', email: '', role: defaultRole, password: '' });
+
+    const changeOpen = (next: boolean) => {
+        setOpen(next);
+
+        if (!next) {
+            form.reset();
+            form.clearErrors();
+            setShowPassword(false);
+            setCopied(false);
+        }
+    };
+
+    const generate = () => {
+        form.setData('password', generatePassword());
+        setShowPassword(true);
+        setCopied(false);
+    };
+
+    const copyPassword = async () => {
+        try {
+            await navigator.clipboard.writeText(form.data.password);
+            setCopied(true);
+            window.setTimeout(() => setCopied(false), 2000);
+        } catch {
+            window.prompt('Copy this password:', form.data.password);
+        }
+    };
+
+    const submit = (event: FormEvent) => {
+        event.preventDefault();
+
+        form.post('/users', {
+            preserveScroll: true,
+            onSuccess: () => changeOpen(false),
+        });
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={changeOpen}>
+            <DialogTrigger asChild>
+                <Button type="button">
+                    <Plus className="size-4" aria-hidden="true" />
+                    Add account
+                </Button>
+            </DialogTrigger>
+
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Add account</DialogTitle>
+                    <DialogDescription>
+                        Create a sign-in for a new person. Give them the email and password after you save; the password cannot be shown again.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <form onSubmit={submit} className="grid gap-4" autoComplete="off">
+                    <div className="grid gap-1.5">
+                        <label htmlFor="new-name" className="text-sm font-medium">
+                            Full name
+                        </label>
+                        <Input
+                            id="new-name"
+                            value={form.data.name}
+                            onChange={(event) => form.setData('name', event.target.value)}
+                            placeholder="e.g. Juan Dela Cruz"
+                            maxLength={255}
+                            autoFocus
+                            required
+                        />
+                        {form.errors.name && <p className="text-sm text-red-600">{form.errors.name}</p>}
+                    </div>
+
+                    <div className="grid gap-1.5">
+                        <label htmlFor="new-email" className="text-sm font-medium">
+                            Email
+                        </label>
+                        <Input
+                            id="new-email"
+                            type="email"
+                            value={form.data.email}
+                            onChange={(event) => form.setData('email', event.target.value)}
+                            placeholder="name@dssc.edu.ph"
+                            maxLength={255}
+                            autoComplete="off"
+                            required
+                        />
+                        {form.errors.email && <p className="text-sm text-red-600">{form.errors.email}</p>}
+                    </div>
+
+                    <div className="grid gap-1.5">
+                        <label htmlFor="new-role" className="text-sm font-medium">
+                            Role
+                        </label>
+                        <select id="new-role" className={SELECT} value={form.data.role} onChange={(event) => form.setData('role', event.target.value)}>
+                            {roles.map((role) => (
+                                <option key={role.value} value={role.value}>
+                                    {role.label}
+                                </option>
+                            ))}
+                        </select>
+                        {form.errors.role && <p className="text-sm text-red-600">{form.errors.role}</p>}
+                    </div>
+
+                    <div className="grid gap-1.5">
+                        <label htmlFor="new-password" className="text-sm font-medium">
+                            Password
+                        </label>
+                        <div className="flex gap-2">
+                            <Input
+                                id="new-password"
+                                type={showPassword ? 'text' : 'password'}
+                                value={form.data.password}
+                                onChange={(event) => form.setData('password', event.target.value)}
+                                autoComplete="new-password"
+                                required
+                            />
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={() => setShowPassword((value) => !value)}
+                                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                            >
+                                {showPassword ? <EyeOff className="size-4" aria-hidden="true" /> : <Eye className="size-4" aria-hidden="true" />}
+                            </Button>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Button type="button" variant="outline" size="sm" onClick={generate}>
+                                <KeyRound className="size-4" aria-hidden="true" />
+                                Generate password
+                            </Button>
+                            {form.data.password !== '' && (
+                                <Button type="button" variant="ghost" size="sm" onClick={() => void copyPassword()}>
+                                    {copied ? <Check className="size-4" aria-hidden="true" /> : <Copy className="size-4" aria-hidden="true" />}
+                                    {copied ? 'Copied' : 'Copy'}
+                                </Button>
+                            )}
+                        </div>
+                        {form.errors.password && <p className="text-sm text-red-600">{form.errors.password}</p>}
+                    </div>
+
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => changeOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" disabled={form.processing}>
+                            {form.processing ? 'Creating…' : 'Create account'}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 export default function UsersIndex({ users, filters, stats, roles }: Props) {
     const [search, setSearch] = useState(filters.search);
@@ -91,11 +277,15 @@ export default function UsersIndex({ users, filters, stats, roles }: Props) {
             <Head title="User Management" />
 
             <div className="flex flex-col gap-4 p-4">
-                <div>
-                    <h1 className="text-xl font-semibold">User Management</h1>
-                    <p className="text-sm text-muted-foreground">
-                        Decide who can do what. A deactivated person keeps their history but is signed out and cannot sign in. Every change is written to the audit log.
-                    </p>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h1 className="text-xl font-semibold">User Management</h1>
+                        <p className="text-sm text-muted-foreground">
+                            Decide who can do what. A deactivated person keeps their history but is signed out and cannot sign in. Every change is written to the audit log.
+                        </p>
+                    </div>
+
+                    <AddAccount roles={roles} />
                 </div>
 
                 <FlashMessages />
