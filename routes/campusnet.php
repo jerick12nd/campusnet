@@ -1,12 +1,14 @@
 <?php
 
 use App\Http\Controllers\AlertController;
+use App\Http\Controllers\AlertFeedController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BandwidthAnalyticsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MonitoredDeviceController;
 use App\Http\Controllers\NetworkInterfaceController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\StoreUserController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\TrafficHistoryController;
 use App\Http\Controllers\TvDisplayAdminController;
@@ -15,7 +17,7 @@ use App\Http\Controllers\TvDisplayPairingController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureTvDisplayAccess;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AlertFeedController;
+
 /*
 |--------------------------------------------------------------------------
 | CampusNet routes
@@ -63,12 +65,13 @@ Route::middleware('auth')->group(function () {
         ->whereNumber('interface')
         ->middleware('can:interfaces.manage')
         ->name('interfaces.update');
-    
-        Route::get('alerts/feed', [AlertFeedController::class, 'index'])
+
+    // JSON feed for the notification bell (must stay above any alerts/{...} route).
+    Route::get('alerts/feed', [AlertFeedController::class, 'index'])
         ->middleware(['can:alerts.view', 'throttle:60,1'])
         ->name('alerts.feed');
-    
-        Route::get('alerts', [AlertController::class, 'index'])
+
+    Route::get('alerts', [AlertController::class, 'index'])
         ->middleware('can:alerts.view')
         ->name('alerts.index');
 
@@ -91,7 +94,8 @@ Route::middleware('auth')->group(function () {
         ->middleware(['can:reports.export', 'throttle:20,1'])
         ->name('reports.download');
 
-    // /settings/* belongs to the starter kit (profile, security, teams), so CampusNet settings live elsewhere.
+    // CampusNet settings live at /system-settings; /settings/* belongs to the starter kit
+    // (profile, security, teams), plus the TV Display tab below.
     Route::get('system-settings', [SystemSettingsController::class, 'edit'])
         ->middleware('can:settings.view')
         ->name('system-settings.edit');
@@ -104,6 +108,11 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:users.manage')
         ->name('users.index');
 
+    // Add account (Super Administrator only).
+    Route::post('users', StoreUserController::class)
+        ->middleware(['can:users.manage', 'throttle:20,1'])
+        ->name('users.store');
+
     Route::patch('users/{user}', [UserController::class, 'update'])
         ->whereNumber('user')
         ->middleware('can:users.manage')
@@ -113,15 +122,15 @@ Route::middleware('auth')->group(function () {
         ->middleware('can:audit.view')
         ->name('audit-logs.index');
 
-    // TV display access management (Super Administrator only).
-   Route::get('settings/tv-display', [TvDisplayAdminController::class, 'index'])
-    ->middleware('can:tv-display.manage')
-    ->name('tv-displays.index');
+    // TV display access management (Super Administrator only). The page is the "TV Display" tab in Settings.
+    Route::get('settings/tv-display', [TvDisplayAdminController::class, 'index'])
+        ->middleware('can:tv-display.manage')
+        ->name('tv-displays.index');
 
+    // The old address still works.
+    Route::get('tv-displays', fn () => to_route('tv-displays.index'))
+        ->middleware('can:tv-display.manage');
 
-     Route::get('tv-displays', fn () => to_route('tv-displays.index'))
-    ->middleware('can:tv-display.manage');
-    
     Route::post('tv-displays', [TvDisplayAdminController::class, 'store'])
         ->middleware(['can:tv-display.manage', 'throttle:10,1'])
         ->name('tv-displays.store');
