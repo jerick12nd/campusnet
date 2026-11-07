@@ -52,7 +52,7 @@ const SAFEGUARDS = [
     'Simulated data is always labelled as demo and never mixed with real measurements.',
 ];
 
-const STACK = ['Laravel 13', 'PHP 8.3', 'React 19', 'Inertia.js', 'TypeScript', 'Tailwind CSS 4', 'shadcn/ui', 'Recharts', 'MySQL', 'Vite', 'SNMP'];
+const STACK = ['Laravel 13', 'PHP 8.5', 'React 19', 'Inertia.js', 'TypeScript', 'Tailwind CSS 4', 'shadcn/ui', 'Recharts', 'MySQL', 'Vite', 'SNMP'];
 
 export default function Landing() {
     const { auth } = usePage<{ auth?: { user?: { name?: string } | null } }>().props;
