@@ -188,11 +188,11 @@ export default function AuditLogsIndex({ logs, filters, actions, stats, timezone
                                                 <details className="mt-1 text-xs">
                                                     <summary className="cursor-pointer text-muted-foreground">Details</summary>
                                                     {row.metadata && (
-                                                        <pre className="mt-1 max-h-48 overflow-auto rounded-md bg-muted p-2 font-mono text-xs break-words whitespace-pre-wrap">
+                                                        <pre className="mt-1 max-h-48 overflow-auto rounded-md bg-muted p-2 font-mono text-xs wrap-break-word whitespace-pre-wrap">
                                                             {JSON.stringify(row.metadata, null, 2)}
                                                         </pre>
                                                     )}
-                                                    {row.user_agent && <p className="mt-1 break-words text-muted-foreground">{row.user_agent}</p>}
+                                                    {row.user_agent && <p className="mt-1 wrap-break-word text-muted-foreground">{row.user_agent}</p>}
                                                 </details>
                                             )}
                                         </td>
