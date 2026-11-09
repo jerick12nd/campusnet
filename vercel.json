@@ -1,0 +1,16 @@
+{
+  "framework": null,
+  "buildCommand": null,
+  "installCommand": null,
+  "functions": {
+    "api/index.php": {
+      "runtime": "vercel-php@0.9.0",
+      "memory": 1024,
+      "maxDuration": 30
+    }
+  },
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/api/index.php" }
+  ]
+}
