@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'nmap' => [
+        'binary' => env('NMAP_BINARY', 'nmap'),
+    ],
+
 ];
