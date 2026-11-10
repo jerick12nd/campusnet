@@ -24,3 +24,14 @@ Schedule::command('campusnet:prune')
     ->dailyAt('03:00')
     ->withoutOverlapping()
     ->description('Delete data older than the retention settings');
+
+Schedule::command('network:scan')
+    ->everyFiveMinutes()
+    ->withoutOverlapping(10)
+    ->description('Scan office subnets for online devices');
+
+Schedule::command('network:prune')
+    ->dailyAt('03:30')
+    ->timezone('Asia/Manila')
+    ->withoutOverlapping()
+    ->description('Delete network scan data older than 30 days');

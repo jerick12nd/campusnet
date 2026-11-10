@@ -3,7 +3,13 @@
 use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\NetworkController;
 
+
+
+Route::get('/network', [NetworkController::class, 'index'])
+    ->middleware('auth')
+    ->name('network');
 Route::inertia('/', 'landing')->name('home');
 
 Route::prefix('{current_team}')

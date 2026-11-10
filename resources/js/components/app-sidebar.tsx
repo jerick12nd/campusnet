@@ -6,6 +6,7 @@ import {
     History,
     LayoutDashboard,
     Network,
+    Radar,
     Router,
     ScrollText,
     Users,
@@ -51,6 +52,7 @@ type NavEntry = {
 const NAVIGATION: NavEntry[] = [
     { title: 'Dashboard', icon: LayoutDashboard, permission: 'dashboard.view', href: '/dashboard' },
     { title: 'Network Devices', icon: Router, permission: 'devices.view', href: '/devices' },
+    { title: 'Online Devices', icon: Radar, permission: 'devices.view', href: '/network' },
     { title: 'Interfaces', icon: Network, permission: 'interfaces.view', href: '/interfaces' },
     { title: 'Bandwidth Analytics', icon: Activity, permission: 'traffic.view', href: '/bandwidth-analytics' },
     { title: 'Traffic History', icon: History, permission: 'traffic.view', href: '/traffic-history' },
