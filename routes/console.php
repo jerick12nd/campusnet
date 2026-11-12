@@ -35,3 +35,7 @@ Schedule::command('network:prune')
     ->timezone('Asia/Manila')
     ->withoutOverlapping()
     ->description('Delete network scan data older than 30 days');
+Schedule::command('network:ping')
+    ->everyMinute()
+    ->withoutOverlapping(5)
+    ->description('Ping monitored devices and the internet');
