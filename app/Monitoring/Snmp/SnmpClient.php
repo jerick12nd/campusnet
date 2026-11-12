@@ -8,7 +8,7 @@ use App\Enums\SnmpVersion;
 use App\Monitoring\Exceptions\SnmpException;
 
 /**
- * Thin, read-only wrapper around the PHP SNMP extension (GET requests only).
+ * Thin, read-only wrapper around the PHP SNMP extension (GET and WALK requests only).
  *
  * Credentials are used to build the request and are never logged or put in
  * exception messages: failures are translated into fixed, safe sentences.
@@ -35,7 +35,9 @@ final class SnmpClient
 
     public static function isAvailable(): bool
     {
-        return extension_loaded('snmp') && function_exists('snmp2_get') && function_exists('snmp3_get');
+        return extension_loaded('snmp')
+            && function_exists('snmp2_get') && function_exists('snmp3_get')
+            && function_exists('snmp2_real_walk') && function_exists('snmp3_real_walk');
     }
 
     /**
@@ -89,6 +91,70 @@ final class SnmpClient
         }
 
         return trim((string) $value);
+    }
+
+    /**
+     * Walk a table column and return its values keyed by the last OID number
+     * (for the interface tables that number is the ifIndex).
+     *
+     * @return array<int, string>
+     *
+     * @throws SnmpException
+     */
+    public function walkByIndex(string $oid): array
+    {
+        $timeout = max(1, $this->timeoutSeconds) * 1_000_000;
+        $retries = max(0, $this->retries);
+        $target = $this->target();
+
+        snmp_set_valueretrieval(SNMP_VALUE_PLAIN);
+
+        $warning = null;
+        set_error_handler(static function (int $severity, string $message) use (&$warning): bool {
+            $warning = $message;
+
+            return true;
+        });
+
+        try {
+            $rows = match ($this->version) {
+                SnmpVersion::V2c => snmp2_real_walk(
+                    $target,
+                    (string) ($this->credentials['community'] ?? ''),
+                    $oid,
+                    $timeout,
+                    $retries,
+                ),
+                SnmpVersion::V3 => snmp3_real_walk(
+                    $target,
+                    (string) ($this->credentials['username'] ?? ''),
+                    (string) ($this->credentials['security_level'] ?? 'authPriv'),
+                    (string) ($this->credentials['auth_protocol'] ?? 'SHA'),
+                    (string) ($this->credentials['auth_password'] ?? ''),
+                    (string) ($this->credentials['priv_protocol'] ?? ''),
+                    (string) ($this->credentials['priv_password'] ?? ''),
+                    $oid,
+                    $timeout,
+                    $retries,
+                ),
+            };
+        } finally {
+            restore_error_handler();
+        }
+
+        if ($rows === false) {
+            throw new SnmpException(self::describeFailure($warning));
+        }
+
+        $result = [];
+
+        foreach ($rows as $key => $value) {
+            if (preg_match('/(\d+)$/', (string) $key, $match) === 1) {
+                $result[(int) $match[1]] = trim((string) $value);
+            }
+        }
+
+        return $result;
     }
 
     /**
