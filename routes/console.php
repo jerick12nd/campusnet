@@ -39,3 +39,7 @@ Schedule::command('network:ping')
     ->everyMinute()
     ->withoutOverlapping(5)
     ->description('Ping monitored devices and the internet');
+ Schedule::command('network:ping')
+    ->everyMinute()
+    ->withoutOverlapping(5)
+    ->description('Ping monitored devices and the internet');

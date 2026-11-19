@@ -45,3 +45,5 @@ yarn-error.log
 /opencode.jsonc
 
 /public/hot
+.vercel
+.env*

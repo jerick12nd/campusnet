@@ -36,6 +36,8 @@ enum UserRole: string
             'alerts.view',
             'reports.view',
             'tv-display.view',
+            // Office Network Activity: summary only (counts per office, no member names).
+            'office-connections.view',
         ];
 
         $operating = [
@@ -45,6 +47,10 @@ enum UserRole: string
             'alerts.manage',
             'reports.export',
             'settings.view',
+            // Office Network Activity
+            'members.view',
+            'website-activity.view',
+            'office-network.export',
         ];
 
         return match ($this) {
@@ -56,6 +62,11 @@ enum UserRole: string
                 'users.manage',
                 'audit.view',
                 'tv-display.manage',
+                // Office Network Activity
+                'offices.manage',
+                'assignments.manage',
+                'website-activity.member-detail',
+                'activity-sources.manage',
             ],
         };
     }
