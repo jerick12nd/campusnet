@@ -101,7 +101,7 @@ function LatencyChart({ points, label }: { points: HistoryPoint[]; label: string
     const valid = points.filter((p) => p.avg !== null);
 
     if (valid.length < 2) {
-        return <p className="text-sm text-muted-foreground">Kulang pa ang data. Kinahanglan labing menos duha ka 10-minute nga bucket.</p>;
+        return <p className="text-sm text-muted-foreground">Not enough data yet. At least two 10-minute buckets are needed.</p>;
     }
 
     const W = 600;
@@ -187,7 +187,7 @@ export default function Index({ offices, links, history }: Props) {
                     <div>
                         <h1 className="text-xl font-semibold">Network status</h1>
                         <p className="text-sm text-muted-foreground">
-                            Real nga ping ug network scan. Wala ni'y bandwidth usage; kinahanglan pa niana og router access.
+                            Real ping and network scan results. This page does not show bandwidth usage; that needs router access.
                         </p>
                     </div>
                     <button
@@ -201,13 +201,13 @@ export default function Index({ offices, links, history }: Props) {
                 </div>
 
                 <section aria-label="Link status" className="flex flex-col gap-4">
-                    <h2 className="text-base font-semibold">Router ug internet</h2>
+                    <h2 className="text-base font-semibold">Router and internet</h2>
 
                     {links.length === 0 ? (
                         <EmptyState
                             icon={Activity}
-                            title="Wala pa'y ping data"
-                            description="I-run ang php artisan network:ping, o i-start ang scheduler (php artisan schedule:work)."
+                            title="No ping data yet"
+                            description="Run php artisan network:ping, or start the scheduler (php artisan schedule:work)."
                         />
                     ) : (
                         <>
@@ -220,28 +220,28 @@ export default function Index({ offices, links, history }: Props) {
                             <div className="grid gap-4 xl:grid-cols-2">
                                 {links.map((link) => (
                                     <div key={link.target} className="rounded-xl border bg-card p-4 text-card-foreground shadow-xs">
-                                        <h3 className="mb-2 text-sm font-medium">Latency sa miaging 24 oras: {link.label}</h3>
-                                        <LatencyChart points={history[link.target] ?? []} label={`Latency sa ${link.label}, miaging 24 oras`} />
+                                        <h3 className="mb-2 text-sm font-medium">Latency over the last 24 hours: {link.label}</h3>
+                                        <LatencyChart points={history[link.target] ?? []} label={`Latency of ${link.label}, last 24 hours`} />
                                     </div>
                                 ))}
                             </div>
 
                             <p className="text-xs text-muted-foreground">
-                                Solid green = average latency kada 10 minutos. Dashed violet = pinakataas nga reading. Red dot = naay packet loss.
+                                Solid green = average latency per 10 minutes. Dashed violet = highest reading. Red dot = packet loss occurred.
                             </p>
                         </>
                     )}
                 </section>
 
                 <section aria-label="Online devices per office" className="flex flex-col gap-3">
-                    <h2 className="text-base font-semibold">Online devices kada office</h2>
+                    <h2 className="text-base font-semibold">Online devices per office</h2>
 
                     {offices.length === 0 ? (
-                        <EmptyState icon={Radar} title="Wala pa'y scan" description="I-run ang php artisan network:scan." />
+                        <EmptyState icon={Radar} title="No scan yet" description="Run php artisan network:scan." />
                     ) : (
                         <div className="overflow-x-auto rounded-xl border bg-card p-4 text-card-foreground shadow-xs">
                             <table className="w-full text-left text-sm">
-                                <caption className="sr-only">Online devices per office, gikan sa pinakabag-o nga scan</caption>
+                                <caption className="sr-only">Online devices per office, from the latest scan</caption>
                                 <thead className="text-xs text-muted-foreground">
                                     <tr>
                                         <th scope="col" className="py-1 pr-3 font-medium">Office</th>
@@ -271,7 +271,7 @@ export default function Index({ offices, links, history }: Props) {
                     )}
 
                     <p className="text-xs text-muted-foreground">
-                        Ang numero nagpakita kung pila ang online, dili kung kinsa o pila ang gigamit nga bandwidth. Refresh kada {REFRESH_SECONDS} segundos samtang makita ang tab.
+                        The numbers show how many devices are online, not who they are or how much bandwidth they use. Refreshes every {REFRESH_SECONDS} seconds while the tab is visible.
                     </p>
                 </section>
             </div>
