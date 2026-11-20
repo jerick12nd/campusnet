@@ -2,13 +2,16 @@ import { Link, usePage } from '@inertiajs/react';
 import {
     Activity,
     Bell,
+    Building2,
     FileText,
+    Globe,
     History,
     LayoutDashboard,
     Network,
     Radar,
     Router,
     ScrollText,
+    UserCheck,
     Users,
     type LucideIcon,
 } from 'lucide-react';
@@ -41,25 +44,40 @@ type NavEntry = {
     permission: string;
     /** null = the page is not built yet (shown disabled, never a dead link). */
     href: string | null;
-    /** Implementation phase in which the page arrives. */
-    phase?: number;
 };
 
-// Order matches the CampusNet specification. Visibility is filtered by the
-// permissions the server shares with the page; the server still authorizes
-// every request, so this list is a convenience, not security.
+type NavGroup = {
+    label: string;
+    items: NavEntry[];
+};
+
+// Visibility is filtered by the permissions the server shares with the page; the server
+// still authorizes every request, so this list is a convenience, not security.
 // System Settings lives in the account menu (top right), not here.
-const NAVIGATION: NavEntry[] = [
-    { title: 'Dashboard', icon: LayoutDashboard, permission: 'dashboard.view', href: '/dashboard' },
-    { title: 'Network Devices', icon: Router, permission: 'devices.view', href: '/devices' },
-    { title: 'Online Devices', icon: Radar, permission: 'devices.view', href: '/network' },
-    { title: 'Interfaces', icon: Network, permission: 'interfaces.view', href: '/interfaces' },
-    { title: 'Bandwidth Analytics', icon: Activity, permission: 'traffic.view', href: '/bandwidth-analytics' },
-    { title: 'Traffic History', icon: History, permission: 'traffic.view', href: '/traffic-history' },
-    { title: 'Alerts', icon: Bell, permission: 'alerts.view', href: '/alerts' },
-    { title: 'Reports', icon: FileText, permission: 'reports.view', href: '/reports' },
-    { title: 'User Management', icon: Users, permission: 'users.manage', href: '/users' },
-    { title: 'Audit Logs', icon: ScrollText, permission: 'audit.view', href: '/audit-logs' },
+const NAV_GROUPS: NavGroup[] = [
+    {
+        label: 'Monitoring',
+        items: [
+            { title: 'Dashboard', icon: LayoutDashboard, permission: 'dashboard.view', href: '/dashboard' },
+            { title: 'Network Devices', icon: Router, permission: 'devices.view', href: '/devices' },
+            { title: 'Online Devices', icon: Radar, permission: 'devices.view', href: '/network' },
+            { title: 'Interfaces', icon: Network, permission: 'interfaces.view', href: '/interfaces' },
+            { title: 'Bandwidth Analytics', icon: Activity, permission: 'traffic.view', href: '/bandwidth-analytics' },
+            { title: 'Traffic History', icon: History, permission: 'traffic.view', href: '/traffic-history' },
+            { title: 'Alerts', icon: Bell, permission: 'alerts.view', href: '/alerts' },
+            { title: 'Reports', icon: FileText, permission: 'reports.view', href: '/reports' },
+            { title: 'User Management', icon: Users, permission: 'users.manage', href: '/users' },
+            { title: 'Audit Logs', icon: ScrollText, permission: 'audit.view', href: '/audit-logs' },
+        ],
+    },
+    {
+        label: 'Office Network Activity',
+        items: [
+            { title: 'Office Connections', icon: Building2, permission: 'office-connections.view', href: '/office-connections' },
+            { title: 'Connected Members', icon: UserCheck, permission: 'members.view', href: null },
+            { title: 'Website Activity', icon: Globe, permission: 'website-activity.view', href: null },
+        ],
+    },
 ];
 
 export function AppSidebar() {
@@ -68,7 +86,10 @@ export function AppSidebar() {
     const campusName = page.props.campusnet?.campus_name;
     const currentPath = page.url.split('?')[0];
 
-    const visible = NAVIGATION.filter((item) => permissions.includes(item.permission));
+    const groups = NAV_GROUPS.map((group) => ({
+        ...group,
+        items: group.items.filter((item) => permissions.includes(item.permission)),
+    })).filter((group) => group.items.length > 0);
 
     return (
         <Sidebar collapsible="icon" variant="inset">
@@ -91,45 +112,47 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <SidebarGroup className="px-2 py-0">
-                    <SidebarGroupLabel>Monitoring</SidebarGroupLabel>
-                    <SidebarMenu>
-                        {visible.map((item) => {
-                            const Icon = item.icon;
+                {groups.map((group, index) => (
+                    <SidebarGroup key={group.label} className={index === 0 ? 'px-2 py-0' : 'px-2 pt-2 pb-0'}>
+                        <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+                        <SidebarMenu>
+                            {group.items.map((item) => {
+                                const Icon = item.icon;
 
-                            if (item.href === null) {
+                                if (item.href === null) {
+                                    return (
+                                        <SidebarMenuItem key={item.title}>
+                                            <SidebarMenuButton
+                                                disabled
+                                                tooltip={`${item.title} (coming soon)`}
+                                                className="cursor-not-allowed opacity-60"
+                                            >
+                                                <Icon aria-hidden="true" />
+                                                <span>{item.title}</span>
+                                            </SidebarMenuButton>
+                                            <SidebarMenuBadge>Soon</SidebarMenuBadge>
+                                        </SidebarMenuItem>
+                                    );
+                                }
+
                                 return (
                                     <SidebarMenuItem key={item.title}>
                                         <SidebarMenuButton
-                                            disabled
-                                            tooltip={`${item.title} (arrives in phase ${item.phase})`}
-                                            className="cursor-not-allowed opacity-60"
+                                            asChild
+                                            isActive={currentPath === item.href || currentPath.startsWith(`${item.href}/`)}
+                                            tooltip={item.title}
                                         >
-                                            <Icon aria-hidden="true" />
-                                            <span>{item.title}</span>
+                                            <Link href={item.href} prefetch>
+                                                <Icon aria-hidden="true" />
+                                                <span>{item.title}</span>
+                                            </Link>
                                         </SidebarMenuButton>
-                                        <SidebarMenuBadge>Soon</SidebarMenuBadge>
                                     </SidebarMenuItem>
                                 );
-                            }
-
-                            return (
-                                <SidebarMenuItem key={item.title}>
-                                    <SidebarMenuButton
-                                        asChild
-                                        isActive={currentPath === item.href || currentPath.startsWith(`${item.href}/`)}
-                                        tooltip={item.title}
-                                    >
-                                        <Link href={item.href} prefetch>
-                                            <Icon aria-hidden="true" />
-                                            <span>{item.title}</span>
-                                        </Link>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            );
-                        })}
-                    </SidebarMenu>
-                </SidebarGroup>
+                            })}
+                        </SidebarMenu>
+                    </SidebarGroup>
+                ))}
             </SidebarContent>
         </Sidebar>
     );

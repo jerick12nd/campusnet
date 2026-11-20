@@ -7,6 +7,8 @@ use App\Http\Controllers\BandwidthAnalyticsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MonitoredDeviceController;
 use App\Http\Controllers\NetworkInterfaceController;
+use App\Http\Controllers\OfficeConnectionController;
+use App\Http\Controllers\OfficeController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StoreUserController;
 use App\Http\Controllers\SystemSettingsController;
@@ -139,6 +141,31 @@ Route::middleware('auth')->group(function () {
         ->whereNumber('display')
         ->middleware('can:tv-display.manage')
         ->name('tv-displays.destroy');
+
+    // Office Network Activity: office totals for everyone with office-connections.view;
+    // member-level rows inside the show page need members.view (checked in the controller).
+    Route::get('office-connections', [OfficeConnectionController::class, 'index'])
+        ->middleware('can:office-connections.view')
+        ->name('office-connections.index');
+
+    Route::get('office-connections/{office}', [OfficeConnectionController::class, 'show'])
+        ->whereNumber('office')
+        ->middleware('can:office-connections.view')
+        ->name('office-connections.show');
+
+    Route::post('offices', [OfficeController::class, 'store'])
+        ->middleware(['can:offices.manage', 'throttle:30,1'])
+        ->name('offices.store');
+
+    Route::patch('offices/{office}', [OfficeController::class, 'update'])
+        ->whereNumber('office')
+        ->middleware('can:offices.manage')
+        ->name('offices.update');
+
+    Route::delete('offices/{office}', [OfficeController::class, 'destroy'])
+        ->whereNumber('office')
+        ->middleware('can:offices.manage')
+        ->name('offices.destroy');
 
     Route::prefix('devices')->name('devices.')->controller(MonitoredDeviceController::class)->group(function () {
         Route::get('/', 'index')->middleware('can:devices.view')->name('index');
