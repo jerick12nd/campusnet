@@ -1,14 +1,18 @@
 <?php
 
+use App\Http\Controllers\ActivitySourceController;
 use App\Http\Controllers\AlertController;
 use App\Http\Controllers\AlertFeedController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BandwidthAnalyticsController;
+use App\Http\Controllers\ConnectedMemberController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\MemberController;
 use App\Http\Controllers\MonitoredDeviceController;
 use App\Http\Controllers\NetworkInterfaceController;
 use App\Http\Controllers\OfficeConnectionController;
 use App\Http\Controllers\OfficeController;
+use App\Http\Controllers\RegisteredDeviceController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StoreUserController;
 use App\Http\Controllers\SystemSettingsController;
@@ -17,6 +21,7 @@ use App\Http\Controllers\TvDisplayAdminController;
 use App\Http\Controllers\TvDisplayController;
 use App\Http\Controllers\TvDisplayPairingController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WebsiteActivityController;
 use App\Http\Middleware\EnsureTvDisplayAccess;
 use Illuminate\Support\Facades\Route;
 
@@ -166,6 +171,77 @@ Route::middleware('auth')->group(function () {
         ->whereNumber('office')
         ->middleware('can:offices.manage')
         ->name('offices.destroy');
+
+    // Office Network Activity: members and their devices. Reading needs members.view;
+    // every change needs assignments.manage (Super Administrator).
+    Route::get('connected-members', [ConnectedMemberController::class, 'index'])
+        ->middleware('can:members.view')
+        ->name('connected-members.index');
+
+    // At most 20 exports a minute per user.
+    Route::get('connected-members/export', [ConnectedMemberController::class, 'export'])
+        ->middleware(['can:office-network.export', 'throttle:20,1'])
+        ->name('connected-members.export');
+
+    Route::get('members', [MemberController::class, 'index'])
+        ->middleware('can:members.view')
+        ->name('members.index');
+
+    Route::get('members/{officeMember}', [MemberController::class, 'show'])
+        ->whereNumber('officeMember')
+        ->middleware('can:members.view')
+        ->name('members.show');
+
+    Route::post('members', [MemberController::class, 'store'])
+        ->middleware(['can:assignments.manage', 'throttle:30,1'])
+        ->name('members.store');
+
+    Route::patch('members/{officeMember}', [MemberController::class, 'update'])
+        ->whereNumber('officeMember')
+        ->middleware('can:assignments.manage')
+        ->name('members.update');
+
+    Route::get('registered-devices', [RegisteredDeviceController::class, 'index'])
+        ->middleware('can:members.view')
+        ->name('registered-devices.index');
+
+    Route::post('registered-devices', [RegisteredDeviceController::class, 'store'])
+        ->middleware(['can:assignments.manage', 'throttle:30,1'])
+        ->name('registered-devices.store');
+
+    Route::patch('registered-devices/{registeredDevice}', [RegisteredDeviceController::class, 'update'])
+        ->whereNumber('registeredDevice')
+        ->middleware('can:assignments.manage')
+        ->name('registered-devices.update');
+
+    Route::post('registered-devices/{registeredDevice}/assign', [RegisteredDeviceController::class, 'assign'])
+        ->whereNumber('registeredDevice')
+        ->middleware(['can:assignments.manage', 'throttle:60,1'])
+        ->name('registered-devices.assign');
+
+    Route::delete('registered-devices/{registeredDevice}/assignment', [RegisteredDeviceController::class, 'unassign'])
+        ->whereNumber('registeredDevice')
+        ->middleware('can:assignments.manage')
+        ->name('registered-devices.unassign');
+
+    // Office Network Activity: website (domain-level) activity and the data sources behind it.
+    Route::get('website-activity', [WebsiteActivityController::class, 'index'])
+        ->middleware('can:website-activity.view')
+        ->name('website-activity.index');
+
+    // At most 20 exports a minute per user.
+    Route::get('website-activity/export', [WebsiteActivityController::class, 'export'])
+        ->middleware(['can:website-activity.view', 'can:office-network.export', 'throttle:20,1'])
+        ->name('website-activity.export');
+
+    Route::get('activity-sources', [ActivitySourceController::class, 'index'])
+        ->middleware('can:activity-sources.manage')
+        ->name('activity-sources.index');
+
+    Route::patch('activity-sources/{activitySource}', [ActivitySourceController::class, 'update'])
+        ->whereNumber('activitySource')
+        ->middleware(['can:activity-sources.manage', 'throttle:30,1'])
+        ->name('activity-sources.update');
 
     Route::prefix('devices')->name('devices.')->controller(MonitoredDeviceController::class)->group(function () {
         Route::get('/', 'index')->middleware('can:devices.view')->name('index');

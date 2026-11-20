@@ -9,4 +9,10 @@ return [
 
     // Default retention for collected records; each data source can override it.
     'default_retention_days' => (int) env('OFFICE_NETWORK_RETENTION_DAYS', 90),
+
+    // Domain activity is stored as one row per client, domain and time bucket.
+    'domain_bucket_seconds' => (int) env('OFFICE_NETWORK_DOMAIN_BUCKET', 300),
+
+    // Longest date range a Website Activity report or export may cover.
+    'max_report_days' => (int) env('OFFICE_NETWORK_MAX_REPORT_DAYS', 90),
 ];

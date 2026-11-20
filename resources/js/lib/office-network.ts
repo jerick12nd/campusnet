@@ -14,3 +14,11 @@ export function formatBytes(bytes: number): string {
 
     return `${value.toFixed(value >= 100 ? 0 : 1)} ${units[unit]}`;
 }
+
+export function formatDateTime(iso: string | null): string {
+    if (!iso) {
+        return '\u2014';
+    }
+
+    return new Date(iso).toLocaleString();
+}

@@ -12,7 +12,8 @@ class DomainActivityRecord extends Model
 {
     protected $fillable = [
         'registered_device_id', 'member_id', 'office_id', 'activity_data_source_id',
-        'domain', 'observation_type', 'client_ip', 'hit_count', 'traffic_bytes', 'observed_at',
+        'domain', 'base_domain', 'observation_type', 'client_ip', 'hit_count',
+        'traffic_bytes', 'observed_at',
     ];
 
     protected function casts(): array

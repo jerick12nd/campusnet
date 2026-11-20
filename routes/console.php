@@ -43,3 +43,4 @@ Schedule::command('network:ping')
     ->everyMinute()
     ->withoutOverlapping(5)
     ->description('Ping monitored devices and the internet');
+\Illuminate\Support\Facades\Schedule::command('office-network:prune')->dailyAt('02:30');

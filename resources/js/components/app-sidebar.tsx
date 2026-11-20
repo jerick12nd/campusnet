@@ -44,6 +44,8 @@ type NavEntry = {
     permission: string;
     /** null = the page is not built yet (shown disabled, never a dead link). */
     href: string | null;
+    /** Other paths that belong to this item, so it stays highlighted on them. */
+    also?: string[];
 };
 
 type NavGroup = {
@@ -74,11 +76,29 @@ const NAV_GROUPS: NavGroup[] = [
         label: 'Office Network Activity',
         items: [
             { title: 'Office Connections', icon: Building2, permission: 'office-connections.view', href: '/office-connections' },
-            { title: 'Connected Members', icon: UserCheck, permission: 'members.view', href: null },
-            { title: 'Website Activity', icon: Globe, permission: 'website-activity.view', href: null },
+            {
+                title: 'Connected Members',
+                icon: UserCheck,
+                permission: 'members.view',
+                href: '/connected-members',
+                also: ['/members', '/registered-devices'],
+            },
+            {
+                title: 'Website Activity',
+                icon: Globe,
+                permission: 'website-activity.view',
+                href: '/website-activity',
+                also: ['/activity-sources'],
+            },
         ],
     },
 ];
+
+function isActive(currentPath: string, item: NavEntry): boolean {
+    const paths = [item.href, ...(item.also ?? [])].filter((path): path is string => path !== null);
+
+    return paths.some((path) => currentPath === path || currentPath.startsWith(`${path}/`));
+}
 
 export function AppSidebar() {
     const page = usePage<CampusNetShared>();
@@ -137,11 +157,7 @@ export function AppSidebar() {
 
                                 return (
                                     <SidebarMenuItem key={item.title}>
-                                        <SidebarMenuButton
-                                            asChild
-                                            isActive={currentPath === item.href || currentPath.startsWith(`${item.href}/`)}
-                                            tooltip={item.title}
-                                        >
+                                        <SidebarMenuButton asChild isActive={isActive(currentPath, item)} tooltip={item.title}>
                                             <Link href={item.href} prefetch>
                                                 <Icon aria-hidden="true" />
                                                 <span>{item.title}</span>
