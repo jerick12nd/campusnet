@@ -1,0 +1,329 @@
+/* =========================================================================
+   UI themes  (resources/css/themes.css)
+
+   Turned on by <html data-theme="mono | royal | emerald">.
+   Liquid Glass is the default and has NO data-theme attribute, so none of
+   this touches it. Every selector below starts with `html[data-theme...]`,
+   which makes it more specific than the Liquid Glass hooks in app.css, so
+   the order of the two files does not matter.
+   ========================================================================= */
+
+/* ---- 1. Shared by all three themes: opaque, no blur ---- */
+/* The Liquid Glass hooks in app.css read the --glass-* tokens. Pointing
+   them at solid theme colors turns every glass surface (dropdowns, sheets,
+   topbar, KPI tiles) into a normal opaque one, with no extra rules. */
+
+html[data-theme] {
+    color-scheme: light;
+
+    --glass-bg: var(--card);
+    --glass-bg-strong: var(--popover);
+    --glass-bg-solid: var(--card);
+    --glass-sheen: transparent;
+    --glass-highlight: transparent;
+    --glass-edge: transparent;
+    --glass-border: var(--border);
+    --glass-tint: var(--accent);
+    --glass-filter: none;
+    --glass-filter-strong: none;
+}
+
+html[data-theme] body::before {
+    display: none;
+}
+
+html[data-theme] [data-slot='sidebar-wrapper'] {
+    background-color: var(--theme-page);
+}
+
+html[data-theme] [data-slot='sidebar-inner'] {
+    background-color: var(--sidebar);
+}
+
+/* Sidebar drawer on phones. */
+html[data-theme] [data-slot='sidebar'][data-mobile='true'] {
+    background-color: var(--sidebar);
+    color: var(--sidebar-foreground);
+}
+
+/* Floating sidebar panel (inset variant). */
+html[data-theme] [data-slot='sidebar'][data-variant='inset'] [data-slot='sidebar-inner'] {
+    border: 0;
+    border-radius: var(--theme-panel-radius);
+    box-shadow: var(--theme-panel-shadow);
+}
+
+/* Main content panel. Phones keep it edge to edge. */
+@media (min-width: 768px) {
+    html[data-theme] [data-slot='sidebar-inset'] {
+        border-radius: var(--theme-panel-radius);
+        box-shadow: var(--theme-panel-shadow);
+    }
+}
+
+html[data-theme] [data-slot='sidebar-inset'] > header {
+    background-color: var(--background);
+    background-image: none;
+    border-bottom-color: var(--theme-header-line);
+    box-shadow: none;
+}
+
+html[data-theme] [data-slot='card'] {
+    border-radius: var(--theme-card-radius);
+    border-color: var(--theme-card-border);
+    box-shadow: var(--theme-card-shadow);
+}
+
+html[data-theme] [data-slot='dialog-content'] {
+    background-color: var(--popover);
+    border-radius: var(--theme-card-radius);
+}
+
+/* Sidebar menu: row height and rounded shape (expanded sidebar only). */
+html[data-theme] [data-sidebar='menu-button']:not([data-size='lg']) {
+    height: 2.5rem;
+    border-radius: var(--theme-menu-radius);
+}
+
+html[data-theme] [data-sidebar='menu-button'][data-active='true'] {
+    font-weight: 600;
+}
+
+/* Round icon chip behind every menu icon. Skipped when the sidebar is
+   collapsed to icons, because the button is only 2rem wide there. */
+html[data-theme]
+    [data-slot='sidebar']:not([data-state='collapsed'])
+    [data-sidebar='menu-button']:not([data-size='lg'])
+    > svg {
+    box-sizing: content-box;
+    padding: 0.375rem;
+    margin-left: -0.125rem;
+    border-radius: 9999px;
+    background-color: var(--theme-chip);
+    transition: background-color 150ms ease;
+}
+
+html[data-theme]
+    [data-slot='sidebar']:not([data-state='collapsed'])
+    [data-sidebar='menu-button'][data-active='true']:not([data-size='lg'])
+    > svg {
+    background-color: var(--theme-chip-active);
+    color: var(--theme-chip-active-ink);
+}
+
+/* ---- 2. Monochrome: light gray, white cards, black pill menu ---- */
+
+html[data-theme='mono'] {
+    --theme-page: oklch(0.9 0.004 260);
+    --theme-panel-radius: 1.5rem;
+    --theme-card-radius: 1.5rem;
+    --theme-menu-radius: 9999px;
+    --theme-header-line: transparent;
+    --theme-card-border: transparent;
+    --theme-panel-shadow: 0 1px 2px oklch(0 0 0 / 0.05), 0 24px 48px -28px oklch(0.2 0.02 260 / 0.3);
+    --theme-card-shadow: 0 1px 2px oklch(0 0 0 / 0.04), 0 14px 30px -20px oklch(0.2 0.02 260 / 0.25);
+    --theme-chip: oklch(0.955 0.003 260);
+    --theme-chip-active: oklch(1 0 0);
+    --theme-chip-active-ink: oklch(0.18 0 0);
+
+    --radius: 1rem;
+
+    --background: oklch(0.955 0.003 260);
+    --foreground: oklch(0.18 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.18 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.18 0 0);
+    --primary: oklch(0.18 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.935 0.003 260);
+    --secondary-foreground: oklch(0.18 0 0);
+    --muted: oklch(0.94 0.003 260);
+    --muted-foreground: oklch(0.5 0.01 260);
+    --accent: oklch(0.935 0.003 260);
+    --accent-foreground: oklch(0.18 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(0.577 0.245 27.325);
+    --border: oklch(0.915 0.003 260);
+    --input: oklch(0.88 0.004 260);
+    --ring: oklch(0.6 0.01 260);
+    --chart-1: oklch(0.2 0 0);
+    --chart-2: oklch(0.62 0.01 260);
+    --chart-3: oklch(0.8 0.005 260);
+    --chart-4: oklch(0.55 0.18 262);
+    --chart-5: oklch(0.7 0.15 150);
+
+    --sidebar: oklch(1 0 0);
+    --sidebar-foreground: oklch(0.18 0 0);
+    --sidebar-primary: oklch(0.18 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.955 0.003 260);
+    --sidebar-accent-foreground: oklch(0.18 0 0);
+    --sidebar-border: oklch(0.92 0 0);
+    --sidebar-ring: oklch(0.6 0.01 260);
+
+    --glass-shadow: oklch(0.2 0.02 260 / 0.2);
+    --glass-hover: oklch(0.2 0.02 260 / 0.05);
+    --glass-scrim: oklch(0.2 0.02 260 / 0.4);
+}
+
+html[data-theme='mono'] [data-sidebar='menu-button'][data-active='true'] {
+    background-color: var(--sidebar-primary);
+    color: var(--sidebar-primary-foreground);
+    box-shadow: none;
+}
+
+html[data-theme='mono'] [data-slot='button'],
+html[data-theme='mono'] [data-slot='badge'] {
+    border-radius: 9999px;
+}
+
+/* ---- 3. Royal blue: solid blue sidebar, white content, white pill ---- */
+
+html[data-theme='royal'] {
+    --theme-page: oklch(0.94 0.022 262);
+    --theme-panel-radius: 1.5rem;
+    --theme-card-radius: 1rem;
+    --theme-menu-radius: 9999px;
+    --theme-header-line: oklch(0.93 0.012 262);
+    --theme-card-border: oklch(0.92 0.014 262);
+    --theme-panel-shadow: 0 1px 2px oklch(0.3 0.1 264 / 0.06), 0 24px 48px -28px oklch(0.35 0.2 264 / 0.35);
+    --theme-card-shadow: 0 1px 2px oklch(0.3 0.1 264 / 0.05), 0 16px 32px -22px oklch(0.35 0.2 264 / 0.3);
+    --theme-chip: oklch(1 0 0 / 0.12);
+    --theme-chip-active: oklch(0.47 0.26 264);
+    --theme-chip-active-ink: oklch(1 0 0);
+
+    --radius: 0.875rem;
+
+    --background: oklch(0.99 0.004 262);
+    --foreground: oklch(0.22 0.045 265);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.22 0.045 265);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.22 0.045 265);
+    --primary: oklch(0.47 0.26 264);
+    --primary-foreground: oklch(1 0 0);
+    --secondary: oklch(0.96 0.014 262);
+    --secondary-foreground: oklch(0.3 0.1 264);
+    --muted: oklch(0.965 0.01 262);
+    --muted-foreground: oklch(0.5 0.035 265);
+    --accent: oklch(0.95 0.028 262);
+    --accent-foreground: oklch(0.3 0.12 264);
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(0.577 0.245 27.325);
+    --border: oklch(0.92 0.014 262);
+    --input: oklch(0.9 0.018 262);
+    --ring: oklch(0.6 0.2 264);
+    --chart-1: oklch(0.52 0.24 264);
+    --chart-2: oklch(0.72 0.14 215);
+    --chart-3: oklch(0.7 0.17 150);
+    --chart-4: oklch(0.78 0.16 75);
+    --chart-5: oklch(0.65 0.22 20);
+
+    --sidebar: oklch(0.47 0.26 264);
+    --sidebar-foreground: oklch(0.985 0.01 262);
+    --sidebar-primary: oklch(1 0 0);
+    --sidebar-primary-foreground: oklch(0.47 0.26 264);
+    --sidebar-accent: oklch(1 0 0 / 0.14);
+    --sidebar-accent-foreground: oklch(1 0 0);
+    --sidebar-border: oklch(1 0 0 / 0.16);
+    --sidebar-ring: oklch(1 0 0 / 0.6);
+
+    --glass-shadow: oklch(0.3 0.15 264 / 0.22);
+    --glass-hover: oklch(0.3 0.12 264 / 0.06);
+    --glass-scrim: oklch(0.2 0.08 264 / 0.45);
+}
+
+/* Muted text inside the blue/green sidebars (the campus name under the logo). */
+html[data-theme='royal'] [data-slot='sidebar-inner'],
+html[data-theme='emerald'] [data-slot='sidebar-inner'] {
+    --color-muted-foreground: color-mix(in oklab, var(--sidebar-foreground) 72%, transparent);
+}
+
+html[data-theme='royal'] [data-sidebar='menu-button']:hover:not([data-active='true']) {
+    background-color: var(--sidebar-accent);
+}
+
+html[data-theme='royal'] [data-sidebar='menu-button'][data-active='true'] {
+    background-color: var(--sidebar-primary);
+    color: var(--sidebar-primary-foreground);
+    box-shadow: 0 8px 18px -10px oklch(0.2 0.2 264 / 0.7);
+}
+
+/* ---- 4. Emerald: deep green sidebar, mint content, green accent ---- */
+
+html[data-theme='emerald'] {
+    --theme-page: oklch(0.925 0.014 175);
+    --theme-panel-radius: 1.5rem;
+    --theme-card-radius: 1.25rem;
+    --theme-menu-radius: 0.875rem;
+    --theme-header-line: oklch(0.91 0.016 170);
+    --theme-card-border: oklch(0.93 0.014 170);
+    --theme-panel-shadow: 0 1px 2px oklch(0.25 0.05 178 / 0.08), 0 24px 48px -28px oklch(0.25 0.06 178 / 0.4);
+    --theme-card-shadow: 0 1px 2px oklch(0.25 0.05 178 / 0.05), 0 14px 30px -22px oklch(0.25 0.06 178 / 0.3);
+    --theme-chip: oklch(1 0 0 / 0.08);
+    --theme-chip-active: oklch(0.78 0.19 152);
+    --theme-chip-active-ink: oklch(0.2 0.05 178);
+
+    --radius: 0.875rem;
+
+    --background: oklch(0.975 0.01 165);
+    --foreground: oklch(0.22 0.04 180);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.22 0.04 180);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.22 0.04 180);
+    --primary: oklch(0.28 0.055 178);
+    --primary-foreground: oklch(0.98 0.01 165);
+    --secondary: oklch(0.955 0.014 165);
+    --secondary-foreground: oklch(0.28 0.055 178);
+    --muted: oklch(0.955 0.012 165);
+    --muted-foreground: oklch(0.5 0.03 175);
+    --accent: oklch(0.94 0.04 160);
+    --accent-foreground: oklch(0.3 0.06 175);
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(0.577 0.245 27.325);
+    --border: oklch(0.915 0.015 170);
+    --input: oklch(0.89 0.02 170);
+    --ring: oklch(0.7 0.17 152);
+    --chart-1: oklch(0.72 0.19 152);
+    --chart-2: oklch(0.35 0.06 178);
+    --chart-3: oklch(0.7 0.17 45);
+    --chart-4: oklch(0.78 0.12 205);
+    --chart-5: oklch(0.6 0.2 25);
+
+    --sidebar: oklch(0.32 0.06 178);
+    --sidebar-foreground: oklch(0.96 0.015 165);
+    --sidebar-primary: oklch(0.78 0.19 152);
+    --sidebar-primary-foreground: oklch(0.2 0.05 178);
+    --sidebar-accent: oklch(1 0 0 / 0.08);
+    --sidebar-accent-foreground: oklch(1 0 0);
+    --sidebar-border: oklch(1 0 0 / 0.1);
+    --sidebar-ring: oklch(0.78 0.19 152);
+
+    --glass-shadow: oklch(0.25 0.06 178 / 0.22);
+    --glass-hover: oklch(0.25 0.06 178 / 0.06);
+    --glass-scrim: oklch(0.15 0.04 178 / 0.5);
+}
+
+html[data-theme='emerald'] [data-sidebar='menu-button']:hover:not([data-active='true']) {
+    background-color: var(--sidebar-accent);
+}
+
+html[data-theme='emerald'] [data-sidebar='menu-button'][data-active='true'] {
+    background-color: oklch(0.4 0.075 170);
+    color: oklch(1 0 0);
+    box-shadow: none;
+}
+
+html[data-theme='emerald'] [data-slot='badge'] {
+    border-radius: 9999px;
+}
+
+/* ---- 5. Reduced motion ---- */
+
+@media (prefers-reduced-motion: reduce) {
+    html[data-theme] [data-sidebar='menu-button'] > svg {
+        transition: none;
+    }
+}

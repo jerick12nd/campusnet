@@ -45,4 +45,20 @@
     <body class="font-sans antialiased">
         <x-inertia::app />
     </body>
+            {{-- Apply the saved UI theme before the first paint, so there is no flash. --}}
+        <script>
+            (function () {
+                try {
+                    var theme = localStorage.getItem('ui-theme');
+
+                    if (theme === 'mono' || theme === 'royal' || theme === 'emerald') {
+                        var root = document.documentElement;
+
+                        root.setAttribute('data-theme', theme);
+                        root.classList.remove('dark');
+                        root.style.colorScheme = 'light';
+                    }
+                } catch (e) {}
+            })();
+        </script>
 </html>

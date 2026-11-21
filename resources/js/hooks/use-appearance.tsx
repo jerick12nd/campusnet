@@ -3,14 +3,26 @@ import { useSyncExternalStore } from 'react';
 export type ResolvedAppearance = 'light' | 'dark';
 export type Appearance = ResolvedAppearance | 'system';
 
+/** 'glass' is the original Liquid Glass look (has light/dark). The rest are fixed light themes. */
+export type UiTheme = 'glass' | 'mono' | 'royal' | 'emerald';
+export const UI_THEMES: readonly UiTheme[] = ['glass', 'mono', 'royal', 'emerald'];
+
 export type UseAppearanceReturn = {
     readonly appearance: Appearance;
     readonly resolvedAppearance: ResolvedAppearance;
     readonly updateAppearance: (mode: Appearance) => void;
 };
 
+export type UseUiThemeReturn = {
+    readonly uiTheme: UiTheme;
+    readonly updateUiTheme: (theme: UiTheme) => void;
+};
+
+const UI_THEME_KEY = 'ui-theme';
+
 const listeners = new Set<() => void>();
 let currentAppearance: Appearance = 'system';
+let currentUiTheme: UiTheme = 'glass';
 
 const prefersDark = (): boolean => {
     if (typeof window === 'undefined') {
@@ -37,6 +49,24 @@ const getStoredAppearance = (): Appearance => {
     return (localStorage.getItem('appearance') as Appearance) || 'system';
 };
 
+const isUiTheme = (value: unknown): value is UiTheme => {
+    return typeof value === 'string' && (UI_THEMES as readonly string[]).includes(value);
+};
+
+const getStoredUiTheme = (): UiTheme => {
+    if (typeof window === 'undefined') {
+        return 'glass';
+    }
+
+    try {
+        const stored = localStorage.getItem(UI_THEME_KEY);
+
+        return isUiTheme(stored) ? stored : 'glass';
+    } catch {
+        return 'glass';
+    }
+};
+
 const isDarkMode = (appearance: Appearance): boolean => {
     return appearance === 'dark' || (appearance === 'system' && prefersDark());
 };
@@ -46,10 +76,20 @@ const applyTheme = (appearance: Appearance): void => {
         return;
     }
 
-    const isDark = isDarkMode(appearance);
+    const root = document.documentElement;
 
-    document.documentElement.classList.toggle('dark', isDark);
-    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+    // The fixed themes are light only, so dark mode applies to Liquid Glass alone.
+    const isDark = currentUiTheme === 'glass' && isDarkMode(appearance);
+
+    root.classList.toggle('dark', isDark);
+    root.style.colorScheme = isDark ? 'dark' : 'light';
+
+    // Liquid Glass = no data-theme attribute at all, so its CSS stays untouched.
+    if (currentUiTheme === 'glass') {
+        root.removeAttribute('data-theme');
+    } else {
+        root.setAttribute('data-theme', currentUiTheme);
+    }
 };
 
 const subscribe = (callback: () => void) => {
@@ -81,6 +121,7 @@ export function initializeTheme(): void {
     }
 
     currentAppearance = getStoredAppearance();
+    currentUiTheme = getStoredUiTheme();
     applyTheme(currentAppearance);
 
     // Set up system theme change listener
@@ -112,4 +153,28 @@ export function useAppearance(): UseAppearanceReturn {
     };
 
     return { appearance, resolvedAppearance, updateAppearance } as const;
+}
+
+export function useUiTheme(): UseUiThemeReturn {
+    const uiTheme: UiTheme = useSyncExternalStore(
+        subscribe,
+        () => currentUiTheme,
+        () => 'glass',
+    );
+
+    const updateUiTheme = (theme: UiTheme): void => {
+        currentUiTheme = theme;
+
+        // Per browser only. No database change needed.
+        try {
+            localStorage.setItem(UI_THEME_KEY, theme);
+        } catch {
+            // Private mode / blocked storage: the theme still applies until reload.
+        }
+
+        applyTheme(currentAppearance);
+        notify();
+    };
+
+    return { uiTheme, updateUiTheme } as const;
 }
