@@ -1,0 +1,14 @@
+/* =========================================================================
+   Top navigation (resources/css/topnav.css)
+
+   Read-only viewers get no sidebar: the menu lives in the topbar. Without a
+   sidebar next to it, the content panel loses the margin and rounded corners
+   shadcn's "inset" layout gives it, so this puts them back. Works for every
+   theme (the header is marked with data-topnav in app-sidebar-header.tsx).
+   ========================================================================= */
+
+[data-slot='sidebar-inset']:has(> header[data-topnav]) {
+    margin: 0.5rem;
+    min-height: calc(100svh - 1rem);
+    border-radius: 1.25rem;
+}

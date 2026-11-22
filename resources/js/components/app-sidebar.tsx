@@ -33,9 +33,6 @@ import {
 import { supportsDarkMode, useAppearance, useUiTheme } from '@/hooks/use-appearance';
 
 type CampusNetShared = {
-    auth?: {
-        user: { name: string; email?: string } | null;
-    };
     access?: {
         role: string | null;
         role_label: string | null;
@@ -67,7 +64,7 @@ type NavGroup = {
 // Visibility is filtered by the permissions the server shares with the page; the server
 // still authorizes every request, so this list is a convenience, not security.
 // System Settings lives in the account menu (top right), not here.
-const NAV_GROUPS: NavGroup[] = [
+export const NAV_GROUPS: NavGroup[] = [
     {
         label: 'Monitoring',
         items: [
@@ -105,24 +102,10 @@ const NAV_GROUPS: NavGroup[] = [
     },
 ];
 
-function isActive(currentPath: string, item: NavEntry): boolean {
+export function isActive(currentPath: string, item: NavEntry): boolean {
     const paths = [item.href, ...(item.also ?? [])].filter((path): path is string => path !== null);
 
     return paths.some((path) => currentPath === path || currentPath.startsWith(`${path}/`));
-}
-
-/** "Jerick Erie Vicente" -> "JV" (first + last word). */
-function initials(name: string): string {
-    const words = name.trim().split(/\s+/).filter(Boolean);
-
-    if (words.length === 0) {
-        return '?';
-    }
-
-    const first = words[0][0];
-    const last = words.length > 1 ? words[words.length - 1][0] : '';
-
-    return (first + last).toUpperCase();
 }
 
 const COLOR_MODES = [
@@ -130,85 +113,61 @@ const COLOR_MODES = [
     { value: 'dark', label: 'Dark', icon: Moon },
 ] as const;
 
-/** Bottom of the sidebar: Light/Dark switch (themes that have dark mode) + the signed-in user. */
+/** Bottom of the sidebar: the Light/Dark switch. Only themes that have a dark mode show it. */
 function SidebarAccount() {
-    const page = usePage<CampusNetShared>();
-    const user = page.props.auth?.user;
-    const roleLabel = page.props.access?.role_label;
     const { uiTheme } = useUiTheme();
     const { resolvedAppearance, updateAppearance } = useAppearance();
 
-    if (!user) {
+    if (!supportsDarkMode(uiTheme)) {
         return null;
     }
 
-    const canSwitch = supportsDarkMode(uiTheme);
     const isDark = resolvedAppearance === 'dark';
 
     return (
         <SidebarFooter className="gap-2 p-2">
-            {canSwitch && (
-                <>
-                    {/* Expanded sidebar: Light | Dark switch. */}
-                    <div
-                        role="group"
-                        aria-label="Color mode"
-                        className="grid grid-cols-2 gap-1 rounded-lg bg-sidebar-accent p-1 group-data-[collapsible=icon]:hidden"
-                    >
-                        {COLOR_MODES.map(({ value, label, icon: Icon }) => {
-                            const selected = resolvedAppearance === value;
+            {/* Expanded sidebar: Light | Dark switch. */}
+            <div
+                role="group"
+                aria-label="Color mode"
+                className="grid grid-cols-2 gap-1 rounded-lg bg-sidebar-accent p-1 group-data-[collapsible=icon]:hidden"
+            >
+                {COLOR_MODES.map(({ value, label, icon: Icon }) => {
+                    const selected = resolvedAppearance === value;
 
-                            return (
-                                <button
-                                    key={value}
-                                    type="button"
-                                    aria-pressed={selected}
-                                    onClick={() => updateAppearance(value)}
-                                    className={`flex h-7 items-center justify-center gap-1.5 rounded-md text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-hidden ${
-                                        selected
-                                            ? 'bg-background text-foreground shadow-sm'
-                                            : 'text-sidebar-foreground/70 hover:text-sidebar-foreground'
-                                    }`}
-                                >
-                                    <Icon className="size-3.5" aria-hidden="true" />
-                                    {label}
-                                </button>
-                            );
-                        })}
-                    </div>
+                    return (
+                        <button
+                            key={value}
+                            type="button"
+                            aria-pressed={selected}
+                            onClick={() => updateAppearance(value)}
+                            className={`flex h-7 items-center justify-center gap-1.5 rounded-md text-xs font-medium transition-colors outline-hidden ${
+                                selected
+                                    ? 'bg-background text-foreground shadow-sm'
+                                    : 'text-sidebar-foreground/70 hover:text-sidebar-foreground focus-visible:bg-sidebar-foreground/10 focus-visible:text-sidebar-foreground'
+                            }`}
+                        >
+                            <Icon className="size-3.5" aria-hidden="true" />
+                            {label}
+                        </button>
+                    );
+                })}
+            </div>
 
-                    {/* Collapsed sidebar: a single icon button. */}
-                    <div className="hidden group-data-[collapsible=icon]:block">
-                        <SidebarMenu>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    tooltip={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-                                    onClick={() => updateAppearance(isDark ? 'light' : 'dark')}
-                                >
-                                    {isDark ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
-                                    <span>{isDark ? 'Light mode' : 'Dark mode'}</span>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        </SidebarMenu>
-                    </div>
-                </>
-            )}
-
-            <SidebarMenu>
-                <SidebarMenuItem>
-                    <SidebarMenuButton size="lg" asChild tooltip={user.name}>
-                        <Link href="/settings/profile" prefetch>
-                            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-xs font-semibold text-sidebar-accent-foreground">
-                                {initials(user.name)}
-                            </span>
-                            <div className="grid flex-1 text-left text-sm leading-tight">
-                                <span className="truncate font-medium">{user.name}</span>
-                                <span className="truncate text-xs text-muted-foreground">{roleLabel ?? user.email}</span>
-                            </div>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-            </SidebarMenu>
+            {/* Collapsed sidebar: a single icon button. */}
+            <div className="hidden group-data-[collapsible=icon]:block">
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton
+                            tooltip={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                            onClick={() => updateAppearance(isDark ? 'light' : 'dark')}
+                        >
+                            {isDark ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
+                            <span>{isDark ? 'Light mode' : 'Dark mode'}</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </div>
         </SidebarFooter>
     );
 }
@@ -219,6 +178,11 @@ export function AppSidebar() {
     const campusName = page.props.campusnet?.campus_name;
     const activeAlerts = page.props.sidebar?.active_alerts ?? 0;
     const currentPath = page.url.split('?')[0];
+
+    // Read-only viewers use the top navigation bar instead (see app-topnav.tsx).
+    if (page.props.access?.role === 'viewer') {
+        return null;
+    }
 
     const groups = NAV_GROUPS.map((group) => ({
         ...group,
