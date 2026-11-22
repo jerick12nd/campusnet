@@ -1,0 +1,146 @@
+/* =========================================================================
+   Midnight theme  (resources/css/midnight.css)
+
+   <html data-theme="midnight">. Unlike the other fixed themes it HAS a dark
+   mode: the sidebar is always a dark navy panel with a blue pill, and the
+   content area follows Light / Dark (the `.dark` class). It builds on the
+   shared block in themes.css, so import it AFTER themes.css.
+   ========================================================================= */
+
+/* ---- 1. Light mode (content is light, sidebar is dark) ---- */
+
+html[data-theme='midnight'] {
+    --theme-page: oklch(0.9 0.008 255);
+    --theme-panel-radius: 1.25rem;
+    --theme-card-radius: 1rem;
+    --theme-menu-radius: 0.625rem;
+    --theme-header-line: oklch(0.92 0.008 255);
+    --theme-card-border: oklch(0.92 0.008 255);
+    --theme-panel-shadow: 0 1px 2px oklch(0 0 0 / 0.08), 0 24px 48px -28px oklch(0.2 0.05 255 / 0.45);
+    --theme-card-shadow: 0 1px 2px oklch(0.2 0.03 255 / 0.05), 0 14px 30px -22px oklch(0.2 0.05 255 / 0.3);
+    --theme-chip: transparent;
+    --theme-chip-active: transparent;
+    --theme-chip-active-ink: currentColor;
+
+    --radius: 0.75rem;
+
+    --background: oklch(0.97 0.004 255);
+    --foreground: oklch(0.2 0.025 255);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.2 0.025 255);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.2 0.025 255);
+    --primary: oklch(0.55 0.17 257);
+    --primary-foreground: oklch(1 0 0);
+    --secondary: oklch(0.955 0.008 255);
+    --secondary-foreground: oklch(0.25 0.04 255);
+    --muted: oklch(0.955 0.006 255);
+    --muted-foreground: oklch(0.5 0.02 255);
+    --accent: oklch(0.94 0.02 255);
+    --accent-foreground: oklch(0.3 0.08 257);
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(0.577 0.245 27.325);
+    --border: oklch(0.92 0.008 255);
+    --input: oklch(0.89 0.01 255);
+    --ring: oklch(0.62 0.15 257);
+    --chart-1: oklch(0.55 0.17 257);
+    --chart-2: oklch(0.72 0.12 210);
+    --chart-3: oklch(0.62 0.17 295);
+    --chart-4: oklch(0.78 0.14 80);
+    --chart-5: oklch(0.63 0.2 18);
+
+    /* The sidebar is the same dark navy in both modes. */
+    --sidebar: oklch(0.2 0.02 255);
+    --sidebar-foreground: oklch(0.93 0.008 255);
+    --sidebar-primary: oklch(0.6 0.16 257);
+    --sidebar-primary-foreground: oklch(1 0 0);
+    --sidebar-accent: oklch(1 0 0 / 0.07);
+    --sidebar-accent-foreground: oklch(1 0 0);
+    --sidebar-border: oklch(1 0 0 / 0.08);
+    --sidebar-ring: oklch(0.7 0.14 257);
+
+    --glass-shadow: oklch(0.2 0.05 255 / 0.22);
+    --glass-hover: oklch(0.2 0.05 255 / 0.06);
+    --glass-scrim: oklch(0.1 0.03 255 / 0.5);
+}
+
+/* ---- 2. Dark mode ---- */
+
+html[data-theme='midnight'].dark {
+    color-scheme: dark;
+
+    --theme-page: oklch(0.12 0.012 255);
+    --theme-header-line: oklch(1 0 0 / 0.08);
+    --theme-card-border: oklch(1 0 0 / 0.08);
+    --theme-panel-shadow: 0 0 0 1px oklch(1 0 0 / 0.06), 0 24px 48px -24px oklch(0 0 0 / 0.7);
+    --theme-card-shadow: 0 1px 2px oklch(0 0 0 / 0.3), 0 14px 30px -22px oklch(0 0 0 / 0.6);
+
+    --background: oklch(0.17 0.015 255);
+    --foreground: oklch(0.96 0.005 255);
+    --card: oklch(0.21 0.018 255);
+    --card-foreground: oklch(0.96 0.005 255);
+    --popover: oklch(0.23 0.018 255);
+    --popover-foreground: oklch(0.96 0.005 255);
+    --primary: oklch(0.62 0.16 257);
+    --primary-foreground: oklch(1 0 0);
+    --secondary: oklch(0.27 0.02 255);
+    --secondary-foreground: oklch(0.96 0.005 255);
+    --muted: oklch(0.26 0.018 255);
+    --muted-foreground: oklch(0.72 0.02 255);
+    --accent: oklch(0.29 0.04 257);
+    --accent-foreground: oklch(0.96 0.005 255);
+    --destructive: oklch(0.65 0.22 25);
+    --destructive-foreground: oklch(0.7 0.2 25);
+    --border: oklch(1 0 0 / 0.1);
+    --input: oklch(1 0 0 / 0.14);
+    --ring: oklch(0.62 0.15 257);
+    --chart-1: oklch(0.68 0.15 257);
+    --chart-2: oklch(0.78 0.12 210);
+    --chart-3: oklch(0.7 0.16 295);
+    --chart-4: oklch(0.82 0.14 80);
+    --chart-5: oklch(0.7 0.19 18);
+
+    --glass-shadow: oklch(0 0 0 / 0.55);
+    --glass-hover: oklch(1 0 0 / 0.06);
+    --glass-scrim: oklch(0 0 0 / 0.6);
+}
+
+/* ---- 3. Sidebar: glossy navy panel, blue pill, plain icons ---- */
+
+html[data-theme='midnight'] [data-slot='sidebar-inner'] {
+    background-image: linear-gradient(to bottom, oklch(0.26 0.022 255), oklch(0.18 0.016 255));
+}
+
+/* No round icon chip here (themes.css adds one for the other themes). */
+html[data-theme='midnight']
+    [data-slot='sidebar']:not([data-state='collapsed'])
+    [data-sidebar='menu-button']:not([data-size='lg'])
+    > svg {
+    padding: 0;
+    margin-left: 0;
+}
+
+html[data-theme='midnight'] [data-slot='sidebar-inner'] {
+    --color-muted-foreground: color-mix(in oklab, var(--sidebar-foreground) 66%, transparent);
+}
+
+html[data-theme='midnight'] [data-sidebar='menu-button']:hover:not([data-active='true']) {
+    background-color: var(--sidebar-accent);
+}
+
+html[data-theme='midnight'] [data-sidebar='menu-button'][data-active='true'] {
+    background-color: var(--sidebar-primary);
+    color: var(--sidebar-primary-foreground);
+    box-shadow: 0 8px 18px -10px oklch(0.6 0.16 257 / 0.8);
+}
+
+/* Collapsed rail: the tooltip that pops out beside an icon is blue. */
+html[data-theme='midnight'] [data-slot='tooltip-content'] {
+    background-color: var(--sidebar-primary);
+    color: var(--sidebar-primary-foreground);
+}
+
+html[data-theme='midnight'] [data-slot='tooltip-arrow'] {
+    background-color: var(--sidebar-primary);
+    fill: var(--sidebar-primary);
+}

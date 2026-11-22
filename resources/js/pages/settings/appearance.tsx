@@ -2,7 +2,7 @@ import { Head } from '@inertiajs/react';
 import AppearanceTabs from '@/components/appearance-tabs';
 import Heading from '@/components/heading';
 import UiThemePicker from '@/components/ui-theme-picker';
-import { useUiTheme } from '@/hooks/use-appearance';
+import { supportsDarkMode, useUiTheme } from '@/hooks/use-appearance';
 import { edit as editAppearance } from '@/routes/appearance';
 
 export default function Appearance() {
@@ -31,11 +31,11 @@ export default function Appearance() {
                         description="Switch between light and dark"
                     />
 
-                    {uiTheme === 'glass' ? (
+                    {supportsDarkMode(uiTheme) ? (
                         <AppearanceTabs />
                     ) : (
                         <p className="text-sm text-muted-foreground">
-                            This theme is light only. Choose Liquid Glass to use dark mode.
+                            This theme is light only. Choose Liquid Glass or Midnight to use dark mode.
                         </p>
                     )}
                 </section>

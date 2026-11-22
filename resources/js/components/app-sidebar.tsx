@@ -7,10 +7,12 @@ import {
     Globe,
     History,
     LayoutDashboard,
+    Moon,
     Network,
     Radar,
     Router,
     ScrollText,
+    Sun,
     UserCheck,
     Users,
     type LucideIcon,
@@ -19,6 +21,7 @@ import {
 import {
     Sidebar,
     SidebarContent,
+    SidebarFooter,
     SidebarGroup,
     SidebarGroupLabel,
     SidebarHeader,
@@ -27,14 +30,20 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { supportsDarkMode, useAppearance, useUiTheme } from '@/hooks/use-appearance';
 
 type CampusNetShared = {
+    auth?: {
+        user: { name: string; email?: string } | null;
+    };
     access?: {
         role: string | null;
         role_label: string | null;
         permissions: string[];
     };
     campusnet?: { campus_name: string };
+    /** Optional: the red badge on Alerts only shows once the server shares this. */
+    sidebar?: { active_alerts?: number };
 };
 
 type NavEntry = {
@@ -46,6 +55,8 @@ type NavEntry = {
     href: string | null;
     /** Other paths that belong to this item, so it stays highlighted on them. */
     also?: string[];
+    /** Red count badge, fed by the server (see HandleInertiaRequests). */
+    badge?: 'active_alerts';
 };
 
 type NavGroup = {
@@ -66,7 +77,7 @@ const NAV_GROUPS: NavGroup[] = [
             { title: 'Interfaces', icon: Network, permission: 'interfaces.view', href: '/interfaces' },
             { title: 'Bandwidth Analytics', icon: Activity, permission: 'traffic.view', href: '/bandwidth-analytics' },
             { title: 'Traffic History', icon: History, permission: 'traffic.view', href: '/traffic-history' },
-            { title: 'Alerts', icon: Bell, permission: 'alerts.view', href: '/alerts' },
+            { title: 'Alerts', icon: Bell, permission: 'alerts.view', href: '/alerts', badge: 'active_alerts' },
             { title: 'Reports', icon: FileText, permission: 'reports.view', href: '/reports' },
             { title: 'User Management', icon: Users, permission: 'users.manage', href: '/users' },
             { title: 'Audit Logs', icon: ScrollText, permission: 'audit.view', href: '/audit-logs' },
@@ -100,10 +111,113 @@ function isActive(currentPath: string, item: NavEntry): boolean {
     return paths.some((path) => currentPath === path || currentPath.startsWith(`${path}/`));
 }
 
+/** "Jerick Erie Vicente" -> "JV" (first + last word). */
+function initials(name: string): string {
+    const words = name.trim().split(/\s+/).filter(Boolean);
+
+    if (words.length === 0) {
+        return '?';
+    }
+
+    const first = words[0][0];
+    const last = words.length > 1 ? words[words.length - 1][0] : '';
+
+    return (first + last).toUpperCase();
+}
+
+const COLOR_MODES = [
+    { value: 'light', label: 'Light', icon: Sun },
+    { value: 'dark', label: 'Dark', icon: Moon },
+] as const;
+
+/** Bottom of the sidebar: Light/Dark switch (themes that have dark mode) + the signed-in user. */
+function SidebarAccount() {
+    const page = usePage<CampusNetShared>();
+    const user = page.props.auth?.user;
+    const roleLabel = page.props.access?.role_label;
+    const { uiTheme } = useUiTheme();
+    const { resolvedAppearance, updateAppearance } = useAppearance();
+
+    if (!user) {
+        return null;
+    }
+
+    const canSwitch = supportsDarkMode(uiTheme);
+    const isDark = resolvedAppearance === 'dark';
+
+    return (
+        <SidebarFooter className="gap-2 p-2">
+            {canSwitch && (
+                <>
+                    {/* Expanded sidebar: Light | Dark switch. */}
+                    <div
+                        role="group"
+                        aria-label="Color mode"
+                        className="grid grid-cols-2 gap-1 rounded-lg bg-sidebar-accent p-1 group-data-[collapsible=icon]:hidden"
+                    >
+                        {COLOR_MODES.map(({ value, label, icon: Icon }) => {
+                            const selected = resolvedAppearance === value;
+
+                            return (
+                                <button
+                                    key={value}
+                                    type="button"
+                                    aria-pressed={selected}
+                                    onClick={() => updateAppearance(value)}
+                                    className={`flex h-7 items-center justify-center gap-1.5 rounded-md text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-hidden ${
+                                        selected
+                                            ? 'bg-background text-foreground shadow-sm'
+                                            : 'text-sidebar-foreground/70 hover:text-sidebar-foreground'
+                                    }`}
+                                >
+                                    <Icon className="size-3.5" aria-hidden="true" />
+                                    {label}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Collapsed sidebar: a single icon button. */}
+                    <div className="hidden group-data-[collapsible=icon]:block">
+                        <SidebarMenu>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    tooltip={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                                    onClick={() => updateAppearance(isDark ? 'light' : 'dark')}
+                                >
+                                    {isDark ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
+                                    <span>{isDark ? 'Light mode' : 'Dark mode'}</span>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        </SidebarMenu>
+                    </div>
+                </>
+            )}
+
+            <SidebarMenu>
+                <SidebarMenuItem>
+                    <SidebarMenuButton size="lg" asChild tooltip={user.name}>
+                        <Link href="/settings/profile" prefetch>
+                            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-xs font-semibold text-sidebar-accent-foreground">
+                                {initials(user.name)}
+                            </span>
+                            <div className="grid flex-1 text-left text-sm leading-tight">
+                                <span className="truncate font-medium">{user.name}</span>
+                                <span className="truncate text-xs text-muted-foreground">{roleLabel ?? user.email}</span>
+                            </div>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            </SidebarMenu>
+        </SidebarFooter>
+    );
+}
+
 export function AppSidebar() {
     const page = usePage<CampusNetShared>();
     const permissions = page.props.access?.permissions ?? [];
     const campusName = page.props.campusnet?.campus_name;
+    const activeAlerts = page.props.sidebar?.active_alerts ?? 0;
     const currentPath = page.url.split('?')[0];
 
     const groups = NAV_GROUPS.map((group) => ({
@@ -155,6 +269,8 @@ export function AppSidebar() {
                                     );
                                 }
 
+                                const count = item.badge === 'active_alerts' ? activeAlerts : 0;
+
                                 return (
                                     <SidebarMenuItem key={item.title}>
                                         <SidebarMenuButton asChild isActive={isActive(currentPath, item)} tooltip={item.title}>
@@ -163,6 +279,12 @@ export function AppSidebar() {
                                                 <span>{item.title}</span>
                                             </Link>
                                         </SidebarMenuButton>
+
+                                        {count > 0 && (
+                                            <SidebarMenuBadge className="rounded-full bg-red-500 px-1.5 text-white! peer-hover/menu-button:text-white! peer-data-[active=true]/menu-button:text-white!">
+                                                {count > 99 ? '99+' : count}
+                                            </SidebarMenuBadge>
+                                        )}
                                     </SidebarMenuItem>
                                 );
                             })}
@@ -170,6 +292,8 @@ export function AppSidebar() {
                     </SidebarGroup>
                 ))}
             </SidebarContent>
+
+            <SidebarAccount />
         </Sidebar>
     );
 }
