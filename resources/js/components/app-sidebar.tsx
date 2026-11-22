@@ -7,12 +7,10 @@ import {
     Globe,
     History,
     LayoutDashboard,
-    Moon,
     Network,
     Radar,
     Router,
     ScrollText,
-    Sun,
     UserCheck,
     Users,
     type LucideIcon,
@@ -21,7 +19,6 @@ import {
 import {
     Sidebar,
     SidebarContent,
-    SidebarFooter,
     SidebarGroup,
     SidebarGroupLabel,
     SidebarHeader,
@@ -30,7 +27,6 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { supportsDarkMode, useAppearance, useUiTheme } from '@/hooks/use-appearance';
 
 type CampusNetShared = {
     access?: {
@@ -106,70 +102,6 @@ export function isActive(currentPath: string, item: NavEntry): boolean {
     const paths = [item.href, ...(item.also ?? [])].filter((path): path is string => path !== null);
 
     return paths.some((path) => currentPath === path || currentPath.startsWith(`${path}/`));
-}
-
-const COLOR_MODES = [
-    { value: 'light', label: 'Light', icon: Sun },
-    { value: 'dark', label: 'Dark', icon: Moon },
-] as const;
-
-/** Bottom of the sidebar: the Light/Dark switch. Only themes that have a dark mode show it. */
-function SidebarAccount() {
-    const { uiTheme } = useUiTheme();
-    const { resolvedAppearance, updateAppearance } = useAppearance();
-
-    if (!supportsDarkMode(uiTheme)) {
-        return null;
-    }
-
-    const isDark = resolvedAppearance === 'dark';
-
-    return (
-        <SidebarFooter className="gap-2 p-2">
-            {/* Expanded sidebar: Light | Dark switch. */}
-            <div
-                role="group"
-                aria-label="Color mode"
-                className="grid grid-cols-2 gap-1 rounded-lg bg-sidebar-accent p-1 group-data-[collapsible=icon]:hidden"
-            >
-                {COLOR_MODES.map(({ value, label, icon: Icon }) => {
-                    const selected = resolvedAppearance === value;
-
-                    return (
-                        <button
-                            key={value}
-                            type="button"
-                            aria-pressed={selected}
-                            onClick={() => updateAppearance(value)}
-                            className={`flex h-7 items-center justify-center gap-1.5 rounded-md text-xs font-medium transition-colors outline-hidden ${
-                                selected
-                                    ? 'bg-background text-foreground shadow-sm'
-                                    : 'text-sidebar-foreground/70 hover:text-sidebar-foreground focus-visible:bg-sidebar-foreground/10 focus-visible:text-sidebar-foreground'
-                            }`}
-                        >
-                            <Icon className="size-3.5" aria-hidden="true" />
-                            {label}
-                        </button>
-                    );
-                })}
-            </div>
-
-            {/* Collapsed sidebar: a single icon button. */}
-            <div className="hidden group-data-[collapsible=icon]:block">
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton
-                            tooltip={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-                            onClick={() => updateAppearance(isDark ? 'light' : 'dark')}
-                        >
-                            {isDark ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
-                            <span>{isDark ? 'Light mode' : 'Dark mode'}</span>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-            </div>
-        </SidebarFooter>
-    );
 }
 
 export function AppSidebar() {
@@ -256,8 +188,6 @@ export function AppSidebar() {
                     </SidebarGroup>
                 ))}
             </SidebarContent>
-
-            <SidebarAccount />
         </Sidebar>
     );
 }
