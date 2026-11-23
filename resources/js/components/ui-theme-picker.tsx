@@ -93,6 +93,23 @@ const THEME_OPTIONS: ThemeOption[] = [
         },
     },
     {
+        id: 'hacker',
+        name: 'Hacker',
+        description: 'Black terminal, neon green, mono font. Always dark.',
+        swatch: {
+            page: '#020503',
+            sidebar: '#030805',
+            sidebarInk: '#95d7a2',
+            activeBg: '#16ff4c',
+            activeInk: '#030f05',
+            content: '#060d08',
+            card: '#0e1c13',
+            ink: '#b5f8c2',
+            accent: '#16ff4c',
+            radius: '0px',
+        },
+    },
+    {
         id: 'mono',
         name: 'Monochrome',
         description: 'Soft gray, white cards, black pill menu.',
@@ -149,7 +166,7 @@ function ThemePreview({ swatch }: { swatch: Swatch }) {
     return (
         <div
             aria-hidden="true"
-            className="flex aspect-[16/10] w-full gap-1 overflow-hidden rounded-lg p-1"
+            className="flex aspect-16/10 w-full gap-1 overflow-hidden rounded-lg p-1"
             style={{ backgroundColor: swatch.page }}
         >
             <div className="flex w-[30%] flex-col gap-1 p-1.5" style={{ backgroundColor: swatch.sidebar, borderRadius: swatch.radius }}>
@@ -195,7 +212,7 @@ export default function UiThemePicker() {
                 return (
                     <label
                         key={option.id}
-                        className="relative block cursor-pointer rounded-xl border bg-card p-2 transition-shadow hover:shadow-md has-[:checked]:border-primary has-[:checked]:ring-2 has-[:checked]:ring-primary/25 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring"
+                        className="relative block cursor-pointer rounded-xl border bg-card p-2 transition-shadow hover:shadow-md has-checked:border-primary has-checked:ring-2 has-checked:ring-primary/25 has-focus-visible:ring-2 has-focus-visible:ring-ring"
                     >
                         <input
                             type="radio"

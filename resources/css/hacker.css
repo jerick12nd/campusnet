@@ -1,0 +1,143 @@
+/* =========================================================================
+   Hacker theme  (resources/css/hacker.css)
+
+   <html data-theme="hacker">. A black terminal: neon green on near-black,
+   monospace font, square corners, dim green outlines, and "inverse video"
+   (green block, black text) for the selected menu row. Always dark: the
+   `.dark` class is forced on by use-appearance.tsx and app.blade.php.
+   It builds on the shared block in themes.css, so import it AFTER themes.css.
+
+   Effects are static and cheap (no blur, no animation) so it stays smooth on
+   low-spec PCs. To remove the scan lines, delete section 4.
+   ========================================================================= */
+
+/* ---- 1. Colors ---- */
+
+html[data-theme='hacker'] {
+    color-scheme: dark;
+    caret-color: oklch(0.87 0.27 145);
+
+    --theme-page: oklch(0.11 0.012 155);
+    --theme-panel-radius: 0;
+    --theme-card-radius: 0;
+    --theme-menu-radius: 0;
+    --theme-header-line: oklch(0.38 0.09 150);
+    --theme-card-border: oklch(0.38 0.09 150);
+    --theme-panel-shadow: 0 0 0 1px oklch(0.87 0.27 145 / 0.1), 0 0 48px -16px oklch(0.87 0.27 145 / 0.3);
+    --theme-card-shadow: 0 0 22px -10px oklch(0.87 0.27 145 / 0.35);
+    --theme-chip: transparent;
+    --theme-chip-active: transparent;
+    --theme-chip-active-ink: currentColor;
+
+    --radius: 0rem;
+
+    --background: oklch(0.15 0.018 155);
+    --foreground: oklch(0.92 0.1 150);
+    --card: oklch(0.18 0.022 155);
+    --card-foreground: oklch(0.92 0.1 150);
+    --popover: oklch(0.2 0.024 155);
+    --popover-foreground: oklch(0.92 0.1 150);
+    --primary: oklch(0.87 0.27 145);
+    --primary-foreground: oklch(0.15 0.03 150);
+    --secondary: oklch(0.22 0.04 150);
+    --secondary-foreground: oklch(0.92 0.1 150);
+    --muted: oklch(0.21 0.03 152);
+    --muted-foreground: oklch(0.72 0.1 150);
+    --accent: oklch(0.26 0.06 150);
+    --accent-foreground: oklch(0.92 0.12 148);
+    --destructive: oklch(0.66 0.23 22);
+    --destructive-foreground: oklch(0.74 0.19 22);
+    --border: oklch(0.38 0.09 150);
+    --input: oklch(0.4 0.09 150);
+    --ring: oklch(0.87 0.27 145);
+    --chart-1: oklch(0.87 0.27 145);
+    --chart-2: oklch(0.82 0.13 200);
+    --chart-3: oklch(0.84 0.16 85);
+    --chart-4: oklch(0.72 0.24 330);
+    --chart-5: oklch(0.7 0.22 22);
+
+    --sidebar: oklch(0.125 0.014 155);
+    --sidebar-foreground: oklch(0.82 0.1 150);
+    --sidebar-primary: oklch(0.87 0.27 145);
+    --sidebar-primary-foreground: oklch(0.15 0.03 150);
+    --sidebar-accent: oklch(0.24 0.05 150);
+    --sidebar-accent-foreground: oklch(0.92 0.12 148);
+    --sidebar-border: oklch(0.32 0.08 150);
+    --sidebar-ring: oklch(0.87 0.27 145);
+
+    --glass-shadow: oklch(0 0 0 / 0.7);
+    --glass-hover: oklch(0.87 0.27 145 / 0.08);
+    --glass-scrim: oklch(0 0 0 / 0.7);
+}
+
+/* ---- 2. Font: monospace everywhere ---- */
+
+html[data-theme='hacker'] {
+    --font-sans: 'Geist Mono Variable', 'Geist Mono', ui-monospace, 'Cascadia Mono', 'SF Mono', Consolas, monospace;
+}
+
+html[data-theme='hacker'] ::selection {
+    background: oklch(0.87 0.27 145);
+    color: oklch(0.15 0.03 150);
+}
+
+/* ---- 3. Panels: dim green outline + faint glow, grid behind them ---- */
+
+html[data-theme='hacker'] [data-slot='sidebar-wrapper'] {
+    background-image:
+        linear-gradient(oklch(0.87 0.27 145 / 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, oklch(0.87 0.27 145 / 0.045) 1px, transparent 1px);
+    background-size: 28px 28px;
+}
+
+html[data-theme='hacker'] [data-slot='sidebar'][data-variant='inset'] [data-slot='sidebar-inner'],
+html[data-theme='hacker'] [data-slot='sidebar-inset'] {
+    border: 1px solid var(--border);
+}
+
+html[data-theme='hacker'] [data-slot='dialog-content'] {
+    border: 1px solid var(--primary);
+    box-shadow: 0 0 40px -10px oklch(0.87 0.27 145 / 0.45);
+}
+
+/* ---- 4. Scan lines (static, very faint) ---- */
+
+html[data-theme='hacker'] body::before {
+    display: block;
+    z-index: 100;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 2px,
+        oklch(0 0 0 / 0.12) 2px,
+        oklch(0 0 0 / 0.12) 3px
+    );
+}
+
+/* ---- 5. Sidebar: "// Group" labels, inverse-video selection, plain icons ---- */
+
+html[data-theme='hacker'] [data-slot='sidebar-group-label']::before {
+    content: '// ';
+    white-space: pre;
+}
+
+/* No round icon chip here (themes.css adds one for the other themes). */
+html[data-theme='hacker']
+    [data-slot='sidebar']:not([data-state='collapsed'])
+    [data-sidebar='menu-button']:not([data-size='lg'])
+    > svg {
+    padding: 0;
+    margin-left: 0;
+}
+
+html[data-theme='hacker'] [data-sidebar='menu-button']:hover:not([data-active='true']) {
+    background-color: var(--sidebar-accent);
+    color: var(--sidebar-accent-foreground);
+    text-shadow: 0 0 8px oklch(0.87 0.27 145 / 0.55);
+}
+
+/* The selected row is a solid green block with black text, like a terminal selection. */
+html[data-theme='hacker'] [data-sidebar='menu-button'][data-active='true'] {
+    background-color: var(--sidebar-primary);
+    color: var(--sidebar-primary-foreground);
+}

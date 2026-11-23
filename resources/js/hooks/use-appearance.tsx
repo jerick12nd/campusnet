@@ -3,13 +3,30 @@ import { useSyncExternalStore } from 'react';
 export type ResolvedAppearance = 'light' | 'dark';
 export type Appearance = ResolvedAppearance | 'system';
 
-/** 'glass' is the original Liquid Glass look. 'midnight', 'icecream' and 'sketchpad' also have a dark mode. The rest are fixed light themes. */
-export type UiTheme = 'glass' | 'midnight' | 'icecream' | 'sketchpad' | 'mono' | 'royal' | 'emerald';
-export const UI_THEMES: readonly UiTheme[] = ['glass', 'midnight', 'icecream', 'sketchpad', 'mono', 'royal', 'emerald'];
+/**
+ * 'glass' is the original Liquid Glass look. Every theme says which color modes it supports:
+ * 'both' = the Light/Dark setting works, 'light' = always light, 'dark' = always dark.
+ */
+export type UiTheme = 'glass' | 'midnight' | 'icecream' | 'sketchpad' | 'hacker' | 'mono' | 'royal' | 'emerald';
+export type ThemeColorModes = 'both' | 'light' | 'dark';
 
-/** Only these themes have a dark mode. The others are light only. */
-const LIGHT_ONLY_THEMES: readonly UiTheme[] = ['mono', 'royal', 'emerald'];
-export const supportsDarkMode = (theme: UiTheme): boolean => !LIGHT_ONLY_THEMES.includes(theme);
+const THEME_COLOR_MODES: Record<UiTheme, ThemeColorModes> = {
+    glass: 'both',
+    midnight: 'both',
+    icecream: 'both',
+    sketchpad: 'both',
+    hacker: 'dark',
+    mono: 'light',
+    royal: 'light',
+    emerald: 'light',
+};
+
+export const UI_THEMES = Object.keys(THEME_COLOR_MODES) as UiTheme[];
+
+export const colorModesOf = (theme: UiTheme): ThemeColorModes => THEME_COLOR_MODES[theme];
+
+/** True when the person can choose Light or Dark for this theme. */
+export const supportsDarkMode = (theme: UiTheme): boolean => THEME_COLOR_MODES[theme] === 'both';
 
 export type UseAppearanceReturn = {
     readonly appearance: Appearance;
@@ -82,8 +99,9 @@ const applyTheme = (appearance: Appearance): void => {
 
     const root = document.documentElement;
 
-    // Mono, Royal blue and Emerald are light only, so dark mode applies to the other themes.
-    const isDark = supportsDarkMode(currentUiTheme) && isDarkMode(appearance);
+    // Light-only themes stay light, dark-only themes stay dark, the rest follow the Light/Dark setting.
+    const modes = colorModesOf(currentUiTheme);
+    const isDark = modes === 'dark' || (modes === 'both' && isDarkMode(appearance));
 
     root.classList.toggle('dark', isDark);
     root.style.colorScheme = isDark ? 'dark' : 'light';

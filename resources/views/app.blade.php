@@ -50,8 +50,9 @@
     (function () {
         try {
             var theme = localStorage.getItem('ui-theme');
-            var themes = ['midnight', 'icecream', 'sketchpad', 'mono', 'royal', 'emerald'];
+            var themes = ['midnight', 'icecream', 'sketchpad', 'hacker', 'mono', 'royal', 'emerald'];
             var lightOnly = ['mono', 'royal', 'emerald'];
+            var darkOnly = ['hacker'];
             var root = document.documentElement;
 
             if (themes.indexOf(theme) === -1) {
@@ -60,10 +61,14 @@
 
             root.setAttribute('data-theme', theme);
 
-            // Only the light-only themes drop dark mode.
             if (lightOnly.indexOf(theme) !== -1) {
                 root.classList.remove('dark');
                 root.style.colorScheme = 'light';
+            }
+
+            if (darkOnly.indexOf(theme) !== -1) {
+                root.classList.add('dark');
+                root.style.colorScheme = 'dark';
             }
         } catch (e) {}
     })();
