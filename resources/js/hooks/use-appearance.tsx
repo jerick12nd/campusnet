@@ -3,13 +3,13 @@ import { useSyncExternalStore } from 'react';
 export type ResolvedAppearance = 'light' | 'dark';
 export type Appearance = ResolvedAppearance | 'system';
 
-/** 'glass' is the original Liquid Glass look. 'midnight' and 'icecream' also have a dark mode. The rest are fixed light themes. */
-export type UiTheme = 'glass' | 'midnight' | 'icecream' | 'mono' | 'royal' | 'emerald';
-export const UI_THEMES: readonly UiTheme[] = ['glass', 'midnight', 'icecream', 'mono', 'royal', 'emerald'];
+/** 'glass' is the original Liquid Glass look. 'midnight', 'icecream' and 'sketchpad' also have a dark mode. The rest are fixed light themes. */
+export type UiTheme = 'glass' | 'midnight' | 'icecream' | 'sketchpad' | 'mono' | 'royal' | 'emerald';
+export const UI_THEMES: readonly UiTheme[] = ['glass', 'midnight', 'icecream', 'sketchpad', 'mono', 'royal', 'emerald'];
 
 /** Only these themes have a dark mode. The others are light only. */
-export const supportsDarkMode = (theme: UiTheme): boolean =>
-    theme === 'glass' || theme === 'midnight' || theme === 'icecream';
+const LIGHT_ONLY_THEMES: readonly UiTheme[] = ['mono', 'royal', 'emerald'];
+export const supportsDarkMode = (theme: UiTheme): boolean => !LIGHT_ONLY_THEMES.includes(theme);
 
 export type UseAppearanceReturn = {
     readonly appearance: Appearance;

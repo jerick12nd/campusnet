@@ -76,6 +76,23 @@ const THEME_OPTIONS: ThemeOption[] = [
         },
     },
     {
+        id: 'sketchpad',
+        name: 'Sketchpad',
+        description: 'Cream paper, indigo ink, hard shadows. Light or dark.',
+        swatch: {
+            page: '#e5e5da',
+            sidebar: '#f6f7eb',
+            sidebarInk: '#3e43f0',
+            activeBg: '#3e43f0',
+            activeInk: '#ffffff',
+            content: '#f6f7eb',
+            card: '#e5e5da',
+            ink: '#3e43f0',
+            accent: '#3e43f0',
+            radius: '0px',
+        },
+    },
+    {
         id: 'mono',
         name: 'Monochrome',
         description: 'Soft gray, white cards, black pill menu.',

@@ -50,18 +50,18 @@
     (function () {
         try {
             var theme = localStorage.getItem('ui-theme');
-            var known = ['midnight', 'icecream', 'mono', 'royal', 'emerald'];
-            var hasDarkMode = ['midnight', 'icecream'];
+            var themes = ['midnight', 'icecream', 'sketchpad', 'mono', 'royal', 'emerald'];
+            var lightOnly = ['mono', 'royal', 'emerald'];
             var root = document.documentElement;
 
-            if (known.indexOf(theme) === -1) {
+            if (themes.indexOf(theme) === -1) {
                 return;
             }
 
             root.setAttribute('data-theme', theme);
 
-            // Mono, Royal blue and Emerald are light only.
-            if (hasDarkMode.indexOf(theme) === -1) {
+            // Only the light-only themes drop dark mode.
+            if (lightOnly.indexOf(theme) !== -1) {
                 root.classList.remove('dark');
                 root.style.colorScheme = 'light';
             }

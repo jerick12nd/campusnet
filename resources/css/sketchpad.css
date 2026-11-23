@@ -1,0 +1,152 @@
+/* =========================================================================
+   Sketchpad theme  (resources/css/sketchpad.css)
+
+   <html data-theme="sketchpad">. Cream paper, indigo ink, square corners,
+   hard offset shadows and a monospace font, taken from the shadcndesign
+   "Sketchpad" theme. It HAS a dark mode (the `.dark` class): deep indigo.
+   It builds on the shared block in themes.css, so import it AFTER themes.css.
+
+   Font: uses Geist Mono if installed (npm i @fontsource-variable/geist-mono
+   and import it in app.css), otherwise the system monospace font.
+   ========================================================================= */
+
+/* ---- 1. Light mode ---- */
+
+html[data-theme='sketchpad'] {
+    --theme-page: oklch(0.9189 0.0147 106.6853);
+    --theme-panel-radius: 0;
+    --theme-card-radius: 0;
+    --theme-menu-radius: 0;
+    --theme-header-line: oklch(0.5066 0.2501 271.8903);
+    --theme-card-border: oklch(0.5066 0.2501 271.8903);
+    --theme-panel-shadow: 6px 6px 0 0 hsl(238.3146 85.5769% 59.2157% / 0.18);
+    --theme-card-shadow: 4px 4px 0 0 hsl(238.3146 85.5769% 59.2157% / 0.15);
+    --theme-chip: transparent;
+    --theme-chip-active: transparent;
+    --theme-chip-active-ink: currentColor;
+
+    --radius: 0rem;
+
+    --background: oklch(0.9721 0.0158 110.5501);
+    --foreground: oklch(0.5066 0.2501 271.8903);
+    --card: oklch(0.9721 0.0158 110.5501);
+    --card-foreground: oklch(0.5066 0.2501 271.8903);
+    --popover: oklch(0.9721 0.0158 110.5501);
+    --popover-foreground: oklch(0.5066 0.2501 271.8903);
+    --primary: oklch(0.5066 0.2501 271.8903);
+    --primary-foreground: oklch(1 0 0);
+    --secondary: oklch(1 0 0);
+    --secondary-foreground: oklch(0.5066 0.2501 271.8903);
+    --muted: oklch(0.9189 0.0147 106.6853);
+    /* A slightly lighter indigo than the design file, so labels read as secondary text. */
+    --muted-foreground: oklch(0.55 0.2 271.8903);
+    --accent: oklch(0.9168 0.0214 109.7161);
+    --accent-foreground: oklch(0.4486 0.2266 271.5512);
+    --destructive: oklch(0.63 0.19 23.03);
+    --destructive-foreground: oklch(0.55 0.2 25);
+    --border: oklch(0.5066 0.2501 271.8903);
+    --input: oklch(0.5066 0.2501 271.8903);
+    --ring: oklch(0.468 0.2721 279.6007);
+    --chart-1: oklch(0.5066 0.2501 271.8903);
+    --chart-2: oklch(0.7 0.19 48);
+    --chart-3: oklch(0.77 0.2 131);
+    --chart-4: oklch(0.68 0.15 237);
+    --chart-5: oklch(0.66 0.21 354);
+
+    --sidebar: oklch(0.9721 0.0158 110.5501);
+    --sidebar-foreground: oklch(0.5066 0.2501 271.8903);
+    --sidebar-primary: oklch(0.5066 0.2501 271.8903);
+    --sidebar-primary-foreground: oklch(1 0 0);
+    --sidebar-accent: oklch(0.9168 0.0214 109.7161);
+    --sidebar-accent-foreground: oklch(0.4486 0.2266 271.5512);
+    --sidebar-border: oklch(0.4486 0.2266 271.5512);
+    --sidebar-ring: oklch(0.4486 0.2266 271.5512);
+
+    --glass-shadow: oklch(0.5066 0.2501 271.8903 / 0.25);
+    --glass-hover: oklch(0.5066 0.2501 271.8903 / 0.07);
+    --glass-scrim: oklch(0.25 0.1 272 / 0.45);
+}
+
+/* ---- 2. Dark mode (deep indigo, cream ink) ---- */
+
+html[data-theme='sketchpad'].dark {
+    color-scheme: dark;
+
+    --theme-page: oklch(0.19 0.09 272);
+    --theme-header-line: oklch(0.427 0.149 277.089);
+    --theme-card-border: oklch(0.427 0.149 277.089);
+    --theme-panel-shadow: 6px 6px 0 0 oklch(0.427 0.149 277.089 / 0.5);
+    --theme-card-shadow: 4px 4px 0 0 oklch(0.427 0.149 277.089 / 0.5);
+
+    --background: oklch(0.256 0.151 268.343);
+    --foreground: oklch(0.972 0.016 110.55);
+    --card: oklch(0.256 0.151 268.343);
+    --card-foreground: oklch(0.972 0.016 110.55);
+    --popover: oklch(0.507 0.25 271.89);
+    --popover-foreground: oklch(0.972 0.016 110.55);
+    --primary: oklch(0.972 0.016 110.55);
+    --primary-foreground: oklch(0.253 0.094 275.725);
+    --secondary: oklch(1 0 0 / 0.2);
+    --secondary-foreground: oklch(1 0 0);
+    --muted: oklch(0.228 0.127 269.556);
+    --muted-foreground: oklch(0.86 0.03 110.55);
+    --accent: oklch(0.228 0.127 269.556);
+    --accent-foreground: oklch(0.972 0.016 110.55);
+    --destructive: oklch(0.711 0.166 22.216);
+    --destructive-foreground: oklch(0.75 0.15 22);
+    --border: oklch(0.427 0.149 277.089);
+    --input: oklch(0.427 0.149 277.089);
+    --ring: oklch(1 0 0);
+    --chart-1: oklch(0.972 0.016 110.55);
+    --chart-2: oklch(0.7 0.19 48);
+    --chart-3: oklch(0.77 0.2 131);
+    --chart-4: oklch(0.68 0.15 237);
+    --chart-5: oklch(0.66 0.21 354);
+
+    --sidebar: oklch(0.253 0.094 275.725);
+    --sidebar-foreground: oklch(0.972 0.016 110.55);
+    --sidebar-primary: oklch(0.507 0.25 271.89);
+    --sidebar-primary-foreground: oklch(1 0 0);
+    --sidebar-accent: oklch(0.416 0.203 272.082);
+    --sidebar-accent-foreground: oklch(0.972 0.016 110.55);
+    --sidebar-border: oklch(0.427 0.149 277.089);
+    --sidebar-ring: oklch(0.972 0.016 110.55);
+
+    --glass-shadow: oklch(0 0 0 / 0.5);
+    --glass-hover: oklch(1 0 0 / 0.07);
+    --glass-scrim: oklch(0.1 0.05 272 / 0.6);
+}
+
+/* ---- 3. Font: monospace everywhere ---- */
+
+html[data-theme='sketchpad'] {
+    --font-sans: 'Geist Mono Variable', 'Geist Mono', ui-monospace, 'Cascadia Mono', 'SF Mono', Consolas, monospace;
+}
+
+/* ---- 4. Panels: ink outline + hard shadow ---- */
+
+html[data-theme='sketchpad'] [data-slot='sidebar'][data-variant='inset'] [data-slot='sidebar-inner'],
+html[data-theme='sketchpad'] [data-slot='sidebar-inset'] {
+    border: 1px solid var(--border);
+}
+
+html[data-theme='sketchpad'] [data-slot='dialog-content'] {
+    border: 1px solid var(--border);
+    box-shadow: 6px 6px 0 0 var(--glass-shadow);
+}
+
+/* ---- 5. Sidebar: flat, square, solid indigo pill, plain icons ---- */
+
+/* No round icon chip here (themes.css adds one for the other themes). */
+html[data-theme='sketchpad']
+    [data-slot='sidebar']:not([data-state='collapsed'])
+    [data-sidebar='menu-button']:not([data-size='lg'])
+    > svg {
+    padding: 0;
+    margin-left: 0;
+}
+
+html[data-theme='sketchpad'] [data-sidebar='menu-button'][data-active='true'] {
+    background-color: var(--sidebar-primary);
+    color: var(--sidebar-primary-foreground);
+}
