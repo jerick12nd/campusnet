@@ -41,7 +41,7 @@ const THEME_OPTIONS: ThemeOption[] = [
             radius: '10px',
         },
     },
-       {
+    {
         id: 'midnight',
         name: 'Midnight',
         description: 'Dark navy sidebar with a blue pill. Light or dark.',
@@ -56,6 +56,40 @@ const THEME_OPTIONS: ThemeOption[] = [
             ink: '#1a2233',
             accent: '#4a7bd0',
             radius: '10px',
+        },
+    },
+    {
+        id: 'icecream',
+        name: 'Icecream',
+        description: 'Soft pink and pistachio, crisp corners. Light or dark.',
+        swatch: {
+            page: '#f8edee',
+            sidebar: '#ffffff',
+            sidebarInk: '#3a3a3a',
+            activeBg: '#caed93',
+            activeInk: '#151e03',
+            content: '#ffffff',
+            card: '#f5f5f5',
+            ink: '#0a0a0a',
+            accent: '#ffbcc8',
+            radius: '6px',
+        },
+    },
+    {
+        id: 'mono',
+        name: 'Monochrome',
+        description: 'Soft gray, white cards, black pill menu.',
+        swatch: {
+            page: '#dedfe1',
+            sidebar: '#ffffff',
+            sidebarInk: '#55565c',
+            activeBg: '#151515',
+            activeInk: '#ffffff',
+            content: '#efeff0',
+            card: '#ffffff',
+            ink: '#151515',
+            accent: '#151515',
+            radius: '12px',
         },
     },
     {
@@ -98,7 +132,7 @@ function ThemePreview({ swatch }: { swatch: Swatch }) {
     return (
         <div
             aria-hidden="true"
-            className="flex aspect-16/10 w-full gap-1 overflow-hidden rounded-lg p-1"
+            className="flex aspect-[16/10] w-full gap-1 overflow-hidden rounded-lg p-1"
             style={{ backgroundColor: swatch.page }}
         >
             <div className="flex w-[30%] flex-col gap-1 p-1.5" style={{ backgroundColor: swatch.sidebar, borderRadius: swatch.radius }}>
@@ -144,7 +178,7 @@ export default function UiThemePicker() {
                 return (
                     <label
                         key={option.id}
-                        className="relative block cursor-pointer rounded-xl border bg-card p-2 transition-shadow hover:shadow-md has-checked:border-primary has-checked:ring-2 has-checked:ring-primary/25 has-focus-visible:ring-2 has-focus-visible:ring-ring"
+                        className="relative block cursor-pointer rounded-xl border bg-card p-2 transition-shadow hover:shadow-md has-[:checked]:border-primary has-[:checked]:ring-2 has-[:checked]:ring-primary/25 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring"
                     >
                         <input
                             type="radio"

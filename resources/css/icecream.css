@@ -1,0 +1,140 @@
+/* =========================================================================
+   Icecream theme  (resources/css/icecream.css)
+
+   <html data-theme="icecream">. Soft pink buttons, a pistachio accent and
+   crisp small corners, taken from the Icecream design system (shadcn Design
+   System Manager). It HAS a dark mode (the `.dark` class), tinted rose.
+   It builds on the shared block in themes.css, so import it AFTER themes.css.
+   ========================================================================= */
+
+/* ---- 1. Light mode ---- */
+
+html[data-theme='icecream'] {
+    --theme-page: oklch(0.955 0.012 12.737);
+    --theme-panel-radius: 0.75rem;
+    --theme-card-radius: 0.25rem;
+    --theme-menu-radius: 0.5rem;
+    --theme-header-line: oklch(0.922 0 0);
+    --theme-card-border: oklch(0.922 0 0);
+    --theme-panel-shadow: 0 1px 2px oklch(0 0 0 / 0.06), 0 24px 44px -32px oklch(0.45 0.12 12.737 / 0.4);
+    --theme-card-shadow: none;
+    --theme-chip: transparent;
+    --theme-chip-active: transparent;
+    --theme-chip-active-ink: currentColor;
+
+    --radius: 0.625rem;
+
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.9 0.121 12.737);
+    --primary-foreground: oklch(0.05 0.121 12.737);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.145 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.145 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(0.577 0.245 27.325);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    /* Deeper pink than the design file's ring, so keyboard focus is visible on white. */
+    --ring: oklch(0.72 0.15 12.737);
+    /* Chart 1 is the pistachio, darkened a little so lines and bars show on white. */
+    --chart-1: oklch(0.7 0.17 125.737);
+    --chart-2: oklch(0.7 0.19 48);
+    --chart-3: oklch(0.63 0.23 304);
+    --chart-4: oklch(0.68 0.15 237);
+    --chart-5: oklch(0.66 0.21 354);
+
+    --sidebar: oklch(1 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    /* Active menu pill = pistachio with dark text (the design file had white text, which is unreadable).
+       Prefer pink? Use: --sidebar-primary: oklch(0.9 0.121 12.737); --sidebar-primary-foreground: oklch(0.05 0.121 12.737); */
+    --sidebar-primary: oklch(0.9 0.121 125.737);
+    --sidebar-primary-foreground: oklch(0.22 0.05 125.737);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.145 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.72 0.15 12.737);
+
+    --glass-shadow: oklch(0.3 0.08 12.737 / 0.2);
+    --glass-hover: oklch(0.3 0.08 12.737 / 0.05);
+    --glass-scrim: oklch(0.2 0.04 12.737 / 0.4);
+}
+
+/* ---- 2. Dark mode (rose-tinted) ---- */
+
+html[data-theme='icecream'].dark {
+    color-scheme: dark;
+
+    --theme-page: oklch(0.15 0.015 12.737);
+    --theme-header-line: oklch(0.315 0.023 12.737);
+    --theme-card-border: oklch(0.35 0.023 12.737);
+    --theme-panel-shadow: 0 0 0 1px oklch(1 0 0 / 0.05), 0 24px 48px -24px oklch(0 0 0 / 0.7);
+    --theme-card-shadow: none;
+
+    --background: oklch(0.22 0.02 12.737);
+    --foreground: oklch(1 0 0);
+    --card: oklch(0.24 0.02 12.737);
+    --card-foreground: oklch(1 0 0);
+    --popover: oklch(0.24 0.02 12.737);
+    --popover-foreground: oklch(1 0 0);
+    --primary: oklch(0.9 0.121 12.737);
+    --primary-foreground: oklch(0.05 0.121 12.737);
+    --secondary: oklch(0.18 0.02 12.737);
+    --secondary-foreground: oklch(1 0 0);
+    --muted: oklch(0.1 0.02 12.737);
+    --muted-foreground: oklch(0.82 0.024 12.737);
+    --accent: oklch(0.28 0.02 12.737);
+    --accent-foreground: oklch(1 0 0);
+    --destructive: oklch(0.65 0.22 25);
+    --destructive-foreground: oklch(0.7 0.2 25);
+    --border: oklch(0.35 0.023 12.737);
+    --input: oklch(0.35 0.023 12.737);
+    --ring: oklch(0.9 0.121 12.737);
+    --chart-1: oklch(0.951 0.121 12.737);
+    --chart-2: oklch(0.7 0.19 48);
+    --chart-3: oklch(0.63 0.23 304);
+    --chart-4: oklch(0.68 0.15 237);
+    --chart-5: oklch(0.66 0.21 354);
+
+    --sidebar: oklch(0.2 0.02 12.737);
+    --sidebar-foreground: oklch(1 0 0);
+    --sidebar-primary: oklch(0.951 0.121 12.737);
+    --sidebar-primary-foreground: oklch(0.2 0.02 12.737);
+    --sidebar-accent: oklch(0.25 0.02 12.737);
+    --sidebar-accent-foreground: oklch(1 0 0);
+    --sidebar-border: oklch(0.315 0.023 12.737);
+    --sidebar-ring: oklch(0.951 0.121 12.737);
+
+    --glass-shadow: oklch(0 0 0 / 0.55);
+    --glass-hover: oklch(1 0 0 / 0.06);
+    --glass-scrim: oklch(0 0 0 / 0.6);
+}
+
+/* ---- 3. Sidebar: flat panel, colored pill, plain icons ---- */
+
+/* No round icon chip here (themes.css adds one for the other themes). */
+html[data-theme='icecream']
+    [data-slot='sidebar']:not([data-state='collapsed'])
+    [data-sidebar='menu-button']:not([data-size='lg'])
+    > svg {
+    padding: 0;
+    margin-left: 0;
+}
+
+html[data-theme='icecream'] [data-sidebar='menu-button'][data-active='true'] {
+    background-color: var(--sidebar-primary);
+    color: var(--sidebar-primary-foreground);
+    box-shadow: none;
+}
+
+/* Pink is too light to read as text on white, so plain "text-primary" gets a deeper pink. */
+html[data-theme='icecream']:not(.dark) .text-primary {
+    color: oklch(0.55 0.2 12.737);
+}

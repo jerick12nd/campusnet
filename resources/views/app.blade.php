@@ -47,20 +47,25 @@
     </body>
                     {{-- Apply the saved UI theme before the first paint, so there is no flash. --}}
         <script>
-            (function () {
-                try {
-                    var theme = localStorage.getItem('ui-theme');
-                    var root = document.documentElement;
+    (function () {
+        try {
+            var theme = localStorage.getItem('ui-theme');
+            var known = ['midnight', 'icecream', 'mono', 'royal', 'emerald'];
+            var hasDarkMode = ['midnight', 'icecream'];
+            var root = document.documentElement;
 
-                    if (theme === 'mono' || theme === 'royal' || theme === 'emerald') {
-                        root.setAttribute('data-theme', theme);
-                        root.classList.remove('dark');
-                        root.style.colorScheme = 'light';
-                    } else if (theme === 'midnight') {
-                        // Midnight has its own dark mode, so keep the light/dark decided above.
-                        root.setAttribute('data-theme', 'midnight');
-                    }
-                } catch (e) {}
-            })();
-        </script>
+            if (known.indexOf(theme) === -1) {
+                return;
+            }
+
+            root.setAttribute('data-theme', theme);
+
+            // Mono, Royal blue and Emerald are light only.
+            if (hasDarkMode.indexOf(theme) === -1) {
+                root.classList.remove('dark');
+                root.style.colorScheme = 'light';
+            }
+        } catch (e) {}
+    })();
+</script>
 </html>

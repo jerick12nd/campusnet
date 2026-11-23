@@ -4,6 +4,10 @@
 
 @import './themes.css';
 @import './midnight.css';
+@import './themes.css';
+@import './midnight.css';
+@import './icecream.css';
+@import './topnav.css';
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 

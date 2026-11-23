@@ -3,12 +3,13 @@ import { useSyncExternalStore } from 'react';
 export type ResolvedAppearance = 'light' | 'dark';
 export type Appearance = ResolvedAppearance | 'system';
 
-/** 'glass' is the original Liquid Glass look. 'midnight' is the dark-navy sidebar. The rest are fixed light themes. */
-export type UiTheme = 'glass' | 'midnight' | 'mono' | 'royal' | 'emerald';
-export const UI_THEMES: readonly UiTheme[] = ['glass', 'midnight', 'mono', 'royal', 'emerald'];
+/** 'glass' is the original Liquid Glass look. 'midnight' and 'icecream' also have a dark mode. The rest are fixed light themes. */
+export type UiTheme = 'glass' | 'midnight' | 'icecream' | 'mono' | 'royal' | 'emerald';
+export const UI_THEMES: readonly UiTheme[] = ['glass', 'midnight', 'icecream', 'mono', 'royal', 'emerald'];
 
 /** Only these themes have a dark mode. The others are light only. */
-export const supportsDarkMode = (theme: UiTheme): boolean => theme === 'glass' || theme === 'midnight';
+export const supportsDarkMode = (theme: UiTheme): boolean =>
+    theme === 'glass' || theme === 'midnight' || theme === 'icecream';
 
 export type UseAppearanceReturn = {
     readonly appearance: Appearance;
@@ -81,9 +82,9 @@ const applyTheme = (appearance: Appearance): void => {
 
     const root = document.documentElement;
 
-        // Mono, Royal blue and Emerald are light only, so dark mode applies to the other two.
+    // Mono, Royal blue and Emerald are light only, so dark mode applies to the other themes.
     const isDark = supportsDarkMode(currentUiTheme) && isDarkMode(appearance);
-    
+
     root.classList.toggle('dark', isDark);
     root.style.colorScheme = isDark ? 'dark' : 'light';
 
