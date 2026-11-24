@@ -1,0 +1,852 @@
+/* =========================================================================
+   Landing page  (resources/css/landing.css)
+
+   Cinematic public page in the DSSC colors: navy (#093a6b) and maroon
+   (#7e090f). Everything is scoped under .lp, so it never touches the app
+   themes, and it does not use the theme tokens on purpose.
+
+   Motion is only transform and opacity (smooth on low-spec PCs) and is
+   switched off for people who prefer reduced motion.
+   ========================================================================= */
+
+.lp {
+    --lp-ink: #030d1b;
+    --lp-night: #061a33;
+    --lp-navy: #093a6b;
+    --lp-steel: #8fb6e0;
+    --lp-maroon: #7e090f;
+    --lp-maroon-hot: #b3161f;
+    --lp-text: #eaf1fa;
+    --lp-muted: #a9bdd7;
+    --lp-line: rgb(143 182 224 / 0.22);
+    --lp-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+    --lp-sans: 'Instrument Sans', 'Instrument Sans Variable', ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
+    --lp-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+    position: relative;
+    overflow-x: clip;
+    background: var(--lp-night);
+    color: var(--lp-text);
+    color-scheme: dark;
+    font-family: var(--lp-sans);
+    -webkit-font-smoothing: antialiased;
+}
+
+.lp *,
+.lp *::before,
+.lp *::after {
+    box-sizing: border-box;
+}
+
+.lp :where(h1, h2, h3, p, ul) {
+    margin: 0;
+}
+
+/* :where() keeps this at zero extra specificity, so button colors below can override it. */
+.lp :where(a) {
+    color: inherit;
+    text-decoration: none;
+}
+
+.lp-wrap {
+    width: 100%;
+    max-width: 90rem;
+    margin-inline: auto;
+    padding-inline: clamp(1.25rem, 6vw, 6rem);
+}
+
+/* ---- Buttons ---- */
+
+.lp-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 3rem;
+    padding: 0 1.7rem;
+    border-radius: 2px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+        background-color 0.25s ease,
+        transform 0.25s var(--lp-ease),
+        box-shadow 0.25s ease;
+}
+
+.lp-btn:focus-visible,
+.lp-nav__link:focus-visible,
+.lp-brand:focus-visible {
+    outline: 2px solid var(--lp-steel);
+    outline-offset: 3px;
+}
+
+.lp-btn--maroon {
+    background: var(--lp-maroon);
+    color: #fff;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.14);
+}
+
+.lp-btn--maroon:hover {
+    background: var(--lp-maroon-hot);
+    transform: translateY(-2px);
+}
+
+.lp-btn--ghost {
+    color: var(--lp-text);
+    box-shadow: inset 0 0 0 1px rgb(234 241 250 / 0.42);
+}
+
+.lp-btn--ghost:hover {
+    background: rgb(234 241 250 / 0.09);
+    transform: translateY(-2px);
+}
+
+.lp-btn--light {
+    background: #fff;
+    color: var(--lp-night);
+}
+
+.lp-btn--light:hover {
+    background: var(--lp-text);
+    transform: translateY(-2px);
+}
+
+/* ---- Skip link ---- */
+
+.lp-skip {
+    position: absolute;
+    left: 0.75rem;
+    top: -4rem;
+    z-index: 60;
+    padding: 0.6rem 1rem;
+    border-radius: 2px;
+    background: #fff;
+    color: var(--lp-night);
+    font-weight: 600;
+}
+
+.lp-skip:focus {
+    top: 0.75rem;
+}
+
+/* ---- Top bar ---- */
+
+.lp-nav {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 1.75rem;
+    padding: 0.9rem clamp(1.25rem, 4vw, 3rem);
+    border-bottom: 1px solid transparent;
+    transition:
+        background-color 0.4s ease,
+        border-color 0.4s ease;
+    animation: lp-fade 1s var(--lp-ease) 1.5s both;
+}
+
+.lp[data-scrolled] .lp-nav {
+    background: rgb(3 13 27 / 0.9);
+    border-bottom-color: var(--lp-line);
+}
+
+.lp-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--lp-serif);
+    font-size: 1rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.lp-brand img {
+    width: 2.6rem;
+    height: 2.6rem;
+    object-fit: contain;
+}
+
+.lp-nav__links {
+    display: none;
+    margin-left: auto;
+    gap: 1.4rem;
+    font-size: 0.92rem;
+    color: var(--lp-muted);
+}
+
+.lp-nav__link:hover {
+    color: var(--lp-text);
+}
+
+.lp-nav__cta {
+    margin-left: auto;
+    height: 2.5rem;
+    padding: 0 1.3rem;
+}
+
+@media (min-width: 48rem) {
+    .lp-nav__links {
+        display: flex;
+    }
+
+    .lp-nav__cta {
+        margin-left: 0;
+    }
+}
+
+@media (min-width: 64rem) {
+    .lp-nav__links {
+        gap: 1.9rem;
+    }
+}
+
+/* ---- Hero ---- */
+
+.lp-hero {
+    position: relative;
+    display: grid;
+    align-items: end;
+    min-height: max(100svh, 40rem);
+    overflow: hidden;
+    isolation: isolate;
+    background: var(--lp-ink);
+}
+
+.lp-hero__media {
+    position: absolute;
+    inset: 0;
+    z-index: -3;
+}
+
+.lp-hero__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 36%;
+    transform-origin: 38% 42%;
+    will-change: transform;
+    animation:
+        lp-push 3.6s var(--lp-ease) both,
+        lp-drift 34s ease-in-out 3.6s infinite alternate;
+}
+
+.lp-hero__shade {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background:
+        radial-gradient(120% 90% at 72% 28%, transparent 38%, rgb(3 13 27 / 0.7) 100%),
+        linear-gradient(to top, var(--lp-night) 2%, rgb(6 26 51 / 0.78) 30%, rgb(6 26 51 / 0.1) 64%, rgb(3 13 27 / 0.5) 100%),
+        linear-gradient(to right, rgb(3 13 27 / 0.75), transparent 62%);
+}
+
+/* Film grain: one small static tile. */
+.lp-grain {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.1;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+}
+
+/* The two shutters that open on load. */
+.lp-shutter {
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    height: 51%;
+    background: var(--lp-ink);
+    pointer-events: none;
+}
+
+.lp-shutter--top {
+    top: 0;
+    animation: lp-shutter-top 1.5s cubic-bezier(0.76, 0, 0.2, 1) 0.2s both;
+}
+
+.lp-shutter--bottom {
+    bottom: 0;
+    animation: lp-shutter-bottom 1.5s cubic-bezier(0.76, 0, 0.2, 1) 0.2s both;
+}
+
+.lp-hero__content {
+    padding-top: clamp(5rem, 9vh, 7rem);
+    padding-bottom: clamp(2.75rem, 8vh, 5rem);
+}
+
+/* The big DSSC seal, above the school name. It scales with the height of the screen. */
+.lp-seal {
+    display: block;
+    width: clamp(7rem, 26svh, 22rem);
+    height: auto;
+    aspect-ratio: 1;
+    margin-bottom: 1.5rem;
+    object-fit: contain;
+    filter: drop-shadow(0 0 48px rgb(143 182 224 / 0.28)) drop-shadow(0 18px 40px rgb(0 0 0 / 0.55));
+    animation: lp-seal-in 1.8s var(--lp-ease) 1.9s both;
+}
+
+.lp-school {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    color: #c9d8ec;
+}
+
+.lp-school::before {
+    content: '';
+    width: 2.75rem;
+    height: 3px;
+    background: var(--lp-maroon-hot);
+}
+
+.lp-title {
+    max-width: 14ch;
+    font-family: var(--lp-serif);
+    font-size: clamp(3.1rem, 8.4vw, 8.4rem);
+    font-weight: 500;
+    line-height: 0.96;
+    letter-spacing: -0.02em;
+}
+
+/* Each headline line slides up out of a mask. */
+.lp-rise {
+    display: block;
+    overflow: hidden;
+    padding-bottom: 0.12em;
+    margin-bottom: -0.12em;
+}
+
+.lp-rise > span {
+    display: block;
+    animation: lp-rise 1.2s var(--lp-ease) var(--lp-delay, 1.1s) both;
+}
+
+.lp-fade {
+    animation: lp-fade 1s var(--lp-ease) var(--lp-delay, 1.8s) both;
+}
+
+.lp-lede {
+    max-width: 34rem;
+    margin-top: 1.7rem;
+    font-size: clamp(1.05rem, 1.5vw, 1.25rem);
+    line-height: 1.6;
+    color: #c9d8ec;
+}
+
+.lp-note {
+    margin-top: 1.6rem;
+    font-size: 0.88rem;
+    color: var(--lp-muted);
+}
+
+.lp-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+    margin-top: 2.2rem;
+}
+
+.lp-cue {
+    position: absolute;
+    right: clamp(1.25rem, 4vw, 3rem);
+    bottom: 2.75rem;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+    font-size: 0.78rem;
+    color: var(--lp-muted);
+    writing-mode: vertical-rl;
+    animation: lp-fade 1s var(--lp-ease) 2.3s both;
+}
+
+.lp-cue::after {
+    content: '';
+    width: 1px;
+    height: 3.5rem;
+    background: linear-gradient(var(--lp-steel), transparent);
+}
+
+@media (min-width: 64rem) {
+    .lp-cue {
+        display: flex;
+    }
+}
+
+/* ---- Shared type ---- */
+
+.lp-h2 {
+    font-family: var(--lp-serif);
+    font-size: clamp(2rem, 4.4vw, 3.9rem);
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+}
+
+.lp-p {
+    max-width: 32rem;
+    margin-top: 1.4rem;
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: var(--lp-muted);
+}
+
+/* ---- Scroll reveal (switched on by the page via data-motion) ---- */
+
+.lp[data-motion] .lp-reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition:
+        opacity 1s var(--lp-ease) var(--lp-delay, 0s),
+        transform 1s var(--lp-ease) var(--lp-delay, 0s);
+}
+
+.lp[data-motion] .lp-reveal.is-visible {
+    opacity: 1;
+    transform: none;
+}
+
+/* ---- Campus photo ---- */
+
+.lp-campus {
+    position: relative;
+    display: grid;
+    align-items: center;
+    min-height: min(100svh, 56rem);
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.lp-campus__frame {
+    position: absolute;
+    inset: 0;
+    z-index: -3;
+    overflow: hidden;
+}
+
+.lp-campus__img {
+    position: absolute;
+    left: 0;
+    top: -12%;
+    width: 100%;
+    height: 124%;
+    object-fit: cover;
+    object-position: 62% 42%;
+}
+
+/* Navy wash: the photo starts as a deep blue duotone and returns to color as it scrolls in. */
+.lp-campus__wash {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background: var(--lp-navy);
+    mix-blend-mode: multiply;
+    opacity: 0.92;
+    transition: opacity 2.6s var(--lp-ease) 0.15s;
+}
+
+.lp-campus.is-visible .lp-campus__wash {
+    opacity: 0.18;
+}
+
+.lp-campus__shade {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+        linear-gradient(to right, rgb(3 13 27 / 0.9), rgb(3 13 27 / 0.55) 48%, transparent 85%),
+        linear-gradient(to bottom, var(--lp-night), transparent 20%, transparent 78%, var(--lp-night));
+}
+
+.lp-campus__copy {
+    padding-block: 6rem;
+}
+
+/* On a phone the text sits right over the photo, so darken it evenly. */
+@media (max-width: 47.99rem) {
+    .lp-campus__shade {
+        background:
+            linear-gradient(rgb(3 13 27 / 0.62), rgb(3 13 27 / 0.62)),
+            linear-gradient(to bottom, var(--lp-night), transparent 18%, transparent 80%, var(--lp-night));
+    }
+}
+
+@supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+        .lp-campus__img {
+            animation: lp-parallax linear both;
+            animation-timeline: view();
+            animation-range: cover 0% cover 100%;
+        }
+    }
+}
+
+/* ---- Content sections ---- */
+
+.lp-section {
+    padding-block: clamp(4.5rem, 10vw, 8rem);
+    background: var(--lp-night);
+}
+
+.lp-section--tight {
+    padding-top: 0;
+}
+
+.lp-section--alt {
+    background: #071f3b;
+    border-block: 1px solid var(--lp-line);
+}
+
+.lp-head {
+    max-width: 40rem;
+    margin-bottom: clamp(2.25rem, 5vw, 3.75rem);
+}
+
+/* Modules: ruled grid, no boxes. */
+.lp-modules {
+    display: grid;
+    gap: 0 3rem;
+    padding: 0;
+    list-style: none;
+}
+
+.lp-module {
+    position: relative;
+    padding-block: 1.6rem 2rem;
+    border-top: 1px solid var(--lp-line);
+}
+
+.lp-module::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: -1px;
+    width: 0;
+    height: 2px;
+    background: var(--lp-maroon-hot);
+    transition: width 0.6s var(--lp-ease);
+}
+
+.lp-module:hover::before {
+    width: 100%;
+}
+
+.lp-module svg {
+    width: 1.35rem;
+    height: 1.35rem;
+    margin-bottom: 0.9rem;
+    color: var(--lp-steel);
+}
+
+.lp-module h3 {
+    font-family: var(--lp-serif);
+    font-size: 1.4rem;
+    font-weight: 500;
+    line-height: 1.15;
+}
+
+.lp-module p {
+    margin-top: 0.55rem;
+    font-size: 0.98rem;
+    line-height: 1.65;
+    color: var(--lp-muted);
+}
+
+@media (min-width: 40rem) {
+    .lp-modules {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 64rem) {
+    .lp-modules {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+/* Screenshots (only rendered when the SCREENSHOTS list is not empty). */
+.lp-shots {
+    display: grid;
+    gap: 2rem;
+    margin-top: 2.5rem;
+    padding: 0;
+    list-style: none;
+}
+
+.lp-shots img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--lp-line);
+}
+
+.lp-shots figcaption {
+    margin-top: 0.7rem;
+    font-size: 0.9rem;
+    color: var(--lp-muted);
+}
+
+@media (min-width: 48rem) {
+    .lp-shots {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Roles: three columns under a maroon rule. */
+.lp-roles {
+    display: grid;
+    gap: 2.5rem 3rem;
+    padding: 0;
+    list-style: none;
+}
+
+.lp-role {
+    padding-top: 1.4rem;
+    border-top: 3px solid var(--lp-maroon);
+}
+
+.lp-role h3 {
+    font-family: var(--lp-serif);
+    font-size: 1.55rem;
+    font-weight: 500;
+    line-height: 1.15;
+}
+
+.lp-role p {
+    margin-top: 0.7rem;
+    line-height: 1.65;
+    color: var(--lp-muted);
+}
+
+@media (min-width: 48rem) {
+    .lp-roles {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+/* Security: plain statements with a maroon tick on the left. */
+.lp-safe {
+    display: grid;
+    gap: 1.6rem 3rem;
+    max-width: 64rem;
+    padding: 0;
+    list-style: none;
+}
+
+.lp-safe li {
+    padding-left: 1.1rem;
+    border-left: 2px solid var(--lp-maroon-hot);
+    line-height: 1.65;
+    color: var(--lp-text);
+}
+
+@media (min-width: 48rem) {
+    .lp-safe {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Status */
+.lp-status {
+    display: grid;
+    gap: 2.25rem 3rem;
+    max-width: 64rem;
+}
+
+.lp-status article {
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--lp-line);
+}
+
+.lp-status h3,
+.lp-built {
+    font-family: var(--lp-serif);
+    font-size: 1.4rem;
+    font-weight: 500;
+}
+
+.lp-status p {
+    margin-top: 0.6rem;
+    line-height: 1.65;
+    color: var(--lp-muted);
+}
+
+.lp-built {
+    margin-top: 3.5rem;
+}
+
+.lp-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 1rem;
+    padding: 0;
+    list-style: none;
+}
+
+.lp-stack li {
+    padding: 0.35rem 0.85rem;
+    border: 1px solid var(--lp-line);
+    border-radius: 2px;
+    font-size: 0.9rem;
+    color: var(--lp-text);
+}
+
+@media (min-width: 48rem) {
+    .lp-status {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* ---- Closing call to action ---- */
+
+.lp-cta {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding-block: clamp(5rem, 12vw, 9rem);
+    border-top: 3px solid var(--lp-maroon);
+}
+
+.lp-cta__bg {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background:
+        radial-gradient(60rem 28rem at 100% 100%, rgb(126 9 15 / 0.75), transparent 70%),
+        linear-gradient(100deg, var(--lp-night) 8%, #0a2b55 62%, #0d2347 100%);
+}
+
+.lp-cta .lp-grain {
+    z-index: -1;
+}
+
+.lp-cta .lp-actions {
+    margin-top: 2.2rem;
+}
+
+.lp-foot {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.75rem 2rem;
+    padding-block: 1.75rem;
+    border-top: 1px solid var(--lp-line);
+    font-size: 0.86rem;
+    color: var(--lp-muted);
+}
+
+/* ---- Keyframes ---- */
+
+@keyframes lp-shutter-top {
+    to {
+        transform: translateY(-100%);
+    }
+}
+
+@keyframes lp-shutter-bottom {
+    to {
+        transform: translateY(100%);
+    }
+}
+
+@keyframes lp-push {
+    from {
+        transform: scale(1.24);
+    }
+
+    to {
+        transform: scale(1.08);
+    }
+}
+
+@keyframes lp-drift {
+    from {
+        transform: scale(1.08) translate3d(0, 0, 0);
+    }
+
+    to {
+        transform: scale(1.15) translate3d(-1.6%, 1.1%, 0);
+    }
+}
+
+@keyframes lp-rise {
+    from {
+        transform: translateY(108%);
+    }
+
+    to {
+        transform: none;
+    }
+}
+
+@keyframes lp-fade {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes lp-seal-in {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes lp-parallax {
+    from {
+        transform: translateY(-6%);
+    }
+
+    to {
+        transform: translateY(6%);
+    }
+}
+
+/* ---- Reduced motion: show the finished page, no movement ---- */
+
+@media (prefers-reduced-motion: reduce) {
+    .lp *,
+    .lp *::before,
+    .lp *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    .lp-shutter {
+        display: none;
+    }
+
+    .lp .lp-reveal {
+        opacity: 1 !important;
+        transform: none !important;
+    }
+
+    .lp-hero__img {
+        transform: scale(1.08);
+    }
+
+    .lp-campus__wash {
+        opacity: 0.3;
+    }
+}

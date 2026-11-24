@@ -7,7 +7,7 @@
 @import './hacker.css';
 @import '@fontsource-variable/geist-mono';
 @import './topnav.css';
-
+@import './landing.css';
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 
