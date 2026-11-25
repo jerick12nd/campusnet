@@ -123,33 +123,38 @@ html[data-theme='dssc'].dark {
 }
 
 /* ---- 3. Campus photo behind everything (one fixed layer) ---- */
-/* themes.css hides body::before for every data-theme; this turns it back on
-   as the photo, and makes the page wrapper see-through so the photo shows
-   in the gaps around the sidebar and the main panel. */
+/* The photo lives on the page wrapper (not on <body> or <html>), so it still
+   shows when the page has its own html/body background color. `isolation`
+   keeps the photo (z-index -1) behind the sidebar and main panel but above
+   the wrapper's own solid navy, which is the fallback if the picture is missing. */
 
-html[data-theme='dssc'] body::before {
-    display: block;
+html[data-theme='dssc'] [data-slot='sidebar-wrapper'] {
+    position: relative;
+    isolation: isolate;
+    background-color: var(--theme-page);
+}
+
+html[data-theme='dssc'] [data-slot='sidebar-wrapper']::before {
     content: '';
     position: fixed;
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    background-color: var(--theme-page);
     background-image:
         linear-gradient(135deg, var(--dssc-wash-from), var(--dssc-wash-via) 55%, var(--dssc-wash-to)),
-        url('/images/landing/building.webp');
+        url('/images/landing/building.jpg');
     background-position: center, center 38%;
     background-size: cover, cover;
     background-repeat: no-repeat;
 }
 
-html[data-theme='dssc'] [data-slot='sidebar-wrapper'] {
-    background-color: transparent;
+/* The main panel lets the photo show through (no blur, so text stays crisp). */
+html[data-theme='dssc'] [data-slot='sidebar-inset'] {
+    background-color: color-mix(in oklab, var(--background) 84%, transparent);
 }
 
-/* The main panel lets a little of the photo through (no blur, so text stays crisp). */
-html[data-theme='dssc'] [data-slot='sidebar-inset'] {
-    background-color: color-mix(in oklab, var(--background) 91%, transparent);
+html[data-theme='dssc'].dark [data-slot='sidebar-inset'] {
+    background-color: color-mix(in oklab, var(--background) 80%, transparent);
 }
 
 /* ---- 4. Sidebar: navy panel with the building, maroon pill, plain icons ---- */
@@ -165,7 +170,7 @@ html[data-theme='dssc'] [data-slot='sidebar-inner'] {
             oklch(0.25 0.075 254 / 0.88) 45%,
             oklch(0.18 0.05 255 / 0.76) 100%
         ),
-        url('/images/landing/building.webp');
+        url('/images/landing/building.jpg');
     background-position: center, 62% 40%;
     background-size: cover, cover;
     background-repeat: no-repeat;
@@ -179,7 +184,7 @@ html[data-theme='dssc'].dark [data-slot='sidebar-inner'] {
             oklch(0.19 0.05 255 / 0.9) 45%,
             oklch(0.14 0.035 255 / 0.82) 100%
         ),
-        url('/images/landing/building.webp');
+        url('/images/landing/building.jpg');
 }
 
 /* No round icon chip here (themes.css adds one for the other themes). */
