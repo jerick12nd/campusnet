@@ -17,8 +17,8 @@ void createInertiaApp({
         switch (true) {
             case name === 'welcome' || name === 'landing':
                 return null;
-            case name.startsWith('auth/'):
-                return AuthLayout;
+           case name === 'auth/login':
+                         return null;
             case name.startsWith('settings/'):
             case name.startsWith('teams/'):
                 return [AppLayout, SettingsLayout];

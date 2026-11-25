@@ -1,10 +1,11 @@
 /* =========================================================================
    Midnight theme  (resources/css/midnight.css)
 
-   <html data-theme="midnight">. Unlike the other fixed themes it HAS a dark
-   mode: the sidebar is always a dark navy panel with a blue pill, and the
-   content area follows Light / Dark (the `.dark` class). It builds on the
-   shared block in themes.css, so import it AFTER themes.css.
+   Applied when <html data-theme="midnight"> is set. Unlike the other fixed
+   themes it HAS a dark mode: the sidebar is always a dark navy panel with a
+   blue pill, and the content area follows Light / Dark (the `.dark` class).
+   It builds on the shared block in themes.css, so import it AFTER themes.css
+   (that import lives in app.css only, never in this file).
    ========================================================================= */
 
 /* ---- 1. Light mode (content is light, sidebar is dark) ---- */
