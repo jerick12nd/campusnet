@@ -28,7 +28,7 @@ type ThemeOption = {
 const THEME_OPTIONS: ThemeOption[] = [
     {
         id: 'glass',
-        name: 'Liquid Glass',
+        name: 'Default',
         description: 'Frosted glass, with dark mode.',
         swatch: {
             page: '#1c2a44',
