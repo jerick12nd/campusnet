@@ -1,0 +1,220 @@
+/* =========================================================================
+   DSSC theme  (resources/css/dssc.css)
+
+   <html data-theme="dssc">. The Davao del Sur State College colors: navy
+   (#093a6b) for the sidebar and buttons, maroon (#7e090f family) for the
+   selected menu row, and the campus building photo fixed behind everything.
+   It HAS a dark mode (the `.dark` class), so Settings > Appearance > Color
+   mode works for it. It builds on the shared block in themes.css, so import
+   it AFTER themes.css.
+
+   The photo is /public/images/landing/building.webp (the same one the landing
+   page uses). To use another picture, change the url() in sections 3 and 4.
+   No blur and no animation: one fixed layer, so it stays smooth on low-spec PCs.
+   ========================================================================= */
+
+/* ---- 1. Light mode (white panels, navy sidebar, photo around them) ---- */
+
+html[data-theme='dssc'] {
+    --theme-page: oklch(0.217 0.056 255);
+    --theme-panel-radius: 1rem;
+    --theme-card-radius: 0.75rem;
+    --theme-menu-radius: 0.625rem;
+    --theme-header-line: oklch(0.92 0.012 255);
+    --theme-card-border: oklch(0.92 0.012 255);
+    --theme-panel-shadow: 0 1px 2px oklch(0 0 0 / 0.1), 0 24px 48px -24px oklch(0.1 0.05 255 / 0.6);
+    --theme-card-shadow: 0 1px 2px oklch(0.2 0.05 255 / 0.05), 0 14px 30px -22px oklch(0.2 0.06 255 / 0.3);
+    --theme-chip: transparent;
+    --theme-chip-active: transparent;
+    --theme-chip-active-ink: currentColor;
+
+    --radius: 0.75rem;
+
+    --background: oklch(0.975 0.006 255);
+    --foreground: oklch(0.22 0.045 255);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.22 0.045 255);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.22 0.045 255);
+    --primary: oklch(0.347 0.099 253);
+    --primary-foreground: oklch(1 0 0);
+    --secondary: oklch(0.955 0.012 255);
+    --secondary-foreground: oklch(0.3 0.08 253);
+    --muted: oklch(0.955 0.01 255);
+    --muted-foreground: oklch(0.5 0.03 255);
+    --accent: oklch(0.945 0.022 255);
+    --accent-foreground: oklch(0.3 0.09 253);
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(0.577 0.245 27.325);
+    --border: oklch(0.92 0.012 255);
+    --input: oklch(0.89 0.018 255);
+    --ring: oklch(0.55 0.14 254);
+    --chart-1: oklch(0.5 0.14 254);
+    --chart-2: oklch(0.52 0.19 26);
+    --chart-3: oklch(0.76 0.14 80);
+    --chart-4: oklch(0.65 0.11 200);
+    --chart-5: oklch(0.58 0.15 295);
+
+    /* Solid navy (also used by the phone drawer). The desktop panel adds the photo in section 4. */
+    --sidebar: oklch(0.27 0.08 254);
+    --sidebar-foreground: oklch(0.955 0.014 255);
+    --sidebar-primary: oklch(0.458 0.176 26);
+    --sidebar-primary-foreground: oklch(1 0 0);
+    --sidebar-accent: oklch(1 0 0 / 0.09);
+    --sidebar-accent-foreground: oklch(1 0 0);
+    --sidebar-border: oklch(1 0 0 / 0.1);
+    --sidebar-ring: oklch(0.8 0.1 255);
+
+    --glass-shadow: oklch(0.2 0.06 255 / 0.25);
+    --glass-hover: oklch(0.2 0.06 255 / 0.06);
+    --glass-scrim: oklch(0.1 0.04 255 / 0.55);
+
+    /* Photo tint, see section 3. */
+    --dssc-wash-from: oklch(0.157 0.035 253 / 0.86);
+    --dssc-wash-via: oklch(0.217 0.056 255 / 0.74);
+    --dssc-wash-to: oklch(0.378 0.147 27 / 0.5);
+}
+
+/* ---- 2. Dark mode ---- */
+
+html[data-theme='dssc'].dark {
+    color-scheme: dark;
+
+    --theme-page: oklch(0.14 0.03 255);
+    --theme-header-line: oklch(1 0 0 / 0.08);
+    --theme-card-border: oklch(1 0 0 / 0.08);
+    --theme-panel-shadow: 0 0 0 1px oklch(1 0 0 / 0.06), 0 24px 48px -24px oklch(0 0 0 / 0.7);
+    --theme-card-shadow: 0 1px 2px oklch(0 0 0 / 0.3), 0 14px 30px -22px oklch(0 0 0 / 0.6);
+
+    --background: oklch(0.18 0.03 255);
+    --foreground: oklch(0.96 0.008 255);
+    --card: oklch(0.225 0.036 255);
+    --card-foreground: oklch(0.96 0.008 255);
+    --popover: oklch(0.245 0.038 255);
+    --popover-foreground: oklch(0.96 0.008 255);
+    --primary: oklch(0.72 0.12 252);
+    --primary-foreground: oklch(0.2 0.05 255);
+    --secondary: oklch(0.28 0.04 255);
+    --secondary-foreground: oklch(0.96 0.008 255);
+    --muted: oklch(0.27 0.035 255);
+    --muted-foreground: oklch(0.72 0.03 255);
+    --accent: oklch(0.31 0.06 254);
+    --accent-foreground: oklch(0.96 0.008 255);
+    --destructive: oklch(0.65 0.22 25);
+    --destructive-foreground: oklch(0.7 0.2 25);
+    --border: oklch(1 0 0 / 0.1);
+    --input: oklch(1 0 0 / 0.14);
+    --ring: oklch(0.65 0.14 254);
+    --chart-1: oklch(0.7 0.13 252);
+    --chart-2: oklch(0.65 0.19 26);
+    --chart-3: oklch(0.82 0.14 80);
+    --chart-4: oklch(0.75 0.11 200);
+    --chart-5: oklch(0.7 0.15 295);
+
+    --sidebar: oklch(0.21 0.05 255);
+
+    --glass-shadow: oklch(0 0 0 / 0.55);
+    --glass-hover: oklch(1 0 0 / 0.06);
+    --glass-scrim: oklch(0 0 0 / 0.6);
+
+    --dssc-wash-from: oklch(0.12 0.03 253 / 0.93);
+    --dssc-wash-via: oklch(0.15 0.04 255 / 0.88);
+    --dssc-wash-to: oklch(0.25 0.1 27 / 0.55);
+}
+
+/* ---- 3. Campus photo behind everything (one fixed layer) ---- */
+/* themes.css hides body::before for every data-theme; this turns it back on
+   as the photo, and makes the page wrapper see-through so the photo shows
+   in the gaps around the sidebar and the main panel. */
+
+html[data-theme='dssc'] body::before {
+    display: block;
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-color: var(--theme-page);
+    background-image:
+        linear-gradient(135deg, var(--dssc-wash-from), var(--dssc-wash-via) 55%, var(--dssc-wash-to)),
+        url('/images/landing/building.webp');
+    background-position: center, center 38%;
+    background-size: cover, cover;
+    background-repeat: no-repeat;
+}
+
+html[data-theme='dssc'] [data-slot='sidebar-wrapper'] {
+    background-color: transparent;
+}
+
+/* The main panel lets a little of the photo through (no blur, so text stays crisp). */
+html[data-theme='dssc'] [data-slot='sidebar-inset'] {
+    background-color: color-mix(in oklab, var(--background) 91%, transparent);
+}
+
+/* ---- 4. Sidebar: navy panel with the building, maroon pill, plain icons ---- */
+
+/* The sidebar is a navy-tinted strip of the building (its own copy of the photo,
+   not the fixed one), dark at the top where the menu is and clearer at the bottom. */
+html[data-theme='dssc'] [data-slot='sidebar-inner'] {
+    background-color: oklch(0.2 0.055 255);
+    background-image:
+        linear-gradient(
+            to bottom,
+            oklch(0.3 0.09 253 / 0.94) 0%,
+            oklch(0.25 0.075 254 / 0.88) 45%,
+            oklch(0.18 0.05 255 / 0.76) 100%
+        ),
+        url('/images/landing/building.webp');
+    background-position: center, 62% 40%;
+    background-size: cover, cover;
+    background-repeat: no-repeat;
+}
+
+html[data-theme='dssc'].dark [data-slot='sidebar-inner'] {
+    background-image:
+        linear-gradient(
+            to bottom,
+            oklch(0.24 0.065 254 / 0.95) 0%,
+            oklch(0.19 0.05 255 / 0.9) 45%,
+            oklch(0.14 0.035 255 / 0.82) 100%
+        ),
+        url('/images/landing/building.webp');
+}
+
+/* No round icon chip here (themes.css adds one for the other themes). */
+html[data-theme='dssc']
+    [data-slot='sidebar']:not([data-state='collapsed'])
+    [data-sidebar='menu-button']:not([data-size='lg'])
+    > svg {
+    padding: 0;
+    margin-left: 0;
+}
+
+html[data-theme='dssc'] [data-slot='sidebar-inner'] {
+    --color-muted-foreground: color-mix(in oklab, var(--sidebar-foreground) 68%, transparent);
+}
+
+html[data-theme='dssc'] [data-sidebar='menu-button']:hover:not([data-active='true']) {
+    background-color: var(--sidebar-accent);
+}
+
+/* The selected row is a maroon pill with a faint light edge so it stands out from the navy. */
+html[data-theme='dssc'] [data-sidebar='menu-button'][data-active='true'] {
+    background-color: var(--sidebar-primary);
+    color: var(--sidebar-primary-foreground);
+    box-shadow:
+        inset 0 0 0 1px oklch(1 0 0 / 0.16),
+        0 8px 18px -10px oklch(0.2 0.12 26 / 0.85);
+}
+
+/* Collapsed rail: the tooltip beside an icon is maroon too. */
+html[data-theme='dssc'] [data-slot='tooltip-content'] {
+    background-color: var(--sidebar-primary);
+    color: var(--sidebar-primary-foreground);
+}
+
+html[data-theme='dssc'] [data-slot='tooltip-arrow'] {
+    background-color: var(--sidebar-primary);
+    fill: var(--sidebar-primary);
+}

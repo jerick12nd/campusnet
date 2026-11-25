@@ -13,6 +13,8 @@ type Swatch = {
     ink: string;
     accent: string;
     radius: string;
+    /** Optional picture shown behind the preview (the DSSC theme uses the campus building). */
+    photo?: string;
 };
 
 type ThemeOption = {
@@ -39,6 +41,24 @@ const THEME_OPTIONS: ThemeOption[] = [
             ink: '#e6ecf8',
             accent: '#7aa7ff',
             radius: '10px',
+        },
+    },
+    {
+        id: 'dssc',
+        name: 'DSSC',
+        description: 'Navy and maroon with the campus building. Light or dark.',
+        swatch: {
+            page: '#061a33',
+            sidebar: '#0a3a6b',
+            sidebarInk: '#c9d8ec',
+            activeBg: '#a3121a',
+            activeInk: '#ffffff',
+            content: '#f4f7fb',
+            card: '#ffffff',
+            ink: '#0b2a4a',
+            accent: '#0b4a8a',
+            radius: '10px',
+            photo: '/images/landing/building.webp',
         },
     },
     {
@@ -167,7 +187,16 @@ function ThemePreview({ swatch }: { swatch: Swatch }) {
         <div
             aria-hidden="true"
             className="flex aspect-16/10 w-full gap-1 overflow-hidden rounded-lg p-1"
-            style={{ backgroundColor: swatch.page }}
+            style={{
+                backgroundColor: swatch.page,
+                ...(swatch.photo
+                    ? {
+                          backgroundImage: `linear-gradient(rgb(6 26 51 / 0.62), rgb(6 26 51 / 0.62)), url(${swatch.photo})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                      }
+                    : {}),
+            }}
         >
             <div className="flex w-[30%] flex-col gap-1 p-1.5" style={{ backgroundColor: swatch.sidebar, borderRadius: swatch.radius }}>
                 <div className="mb-0.5 h-1.5 w-3/4 rounded-full" style={{ backgroundColor: swatch.sidebarInk, opacity: 0.9 }} />

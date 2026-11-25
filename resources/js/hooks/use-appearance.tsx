@@ -7,11 +7,12 @@ export type Appearance = ResolvedAppearance | 'system';
  * 'glass' is the original Liquid Glass look. Every theme says which color modes it supports:
  * 'both' = the Light/Dark setting works, 'light' = always light, 'dark' = always dark.
  */
-export type UiTheme = 'glass' | 'midnight' | 'icecream' | 'sketchpad' | 'hacker' | 'mono' | 'royal' | 'emerald';
+export type UiTheme = 'glass' | 'dssc' | 'midnight' | 'icecream' | 'sketchpad' | 'hacker' | 'mono' | 'royal' | 'emerald';
 export type ThemeColorModes = 'both' | 'light' | 'dark';
 
 const THEME_COLOR_MODES: Record<UiTheme, ThemeColorModes> = {
     glass: 'both',
+    dssc: 'both',
     midnight: 'both',
     icecream: 'both',
     sketchpad: 'both',
