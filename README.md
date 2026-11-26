@@ -49,7 +49,7 @@ A web-based campus bandwidth monitoring and network usage analytics system for *
 
 | Layer | Technology |
 | --- | --- |
-| Backend | Laravel 13, PHP 8.3+ |
+| Backend | Laravel 13, PHP 8.5+ |
 | Frontend | React 19, TypeScript, Inertia.js, Tailwind CSS 4, shadcn/ui, Lucide, Recharts |
 | Database | MySQL (SQLite for the test suite) |
 | Build | Vite |
