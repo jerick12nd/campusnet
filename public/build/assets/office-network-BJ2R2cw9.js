@@ -1,0 +1,1 @@
+function e(e){if(e<1024)return`${e} B`;let t=[`KB`,`MB`,`GB`,`TB`],n=e/1024,r=0;for(;n>=1024&&r<t.length-1;)n/=1024,r++;return`${n.toFixed(n>=100?0:1)} ${t[r]}`}function t(e){return e?new Date(e).toLocaleString():`—`}export{t as n,e as t};

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> e5f0d7e (Add README)
 # DSSC CampusNet
 
 A web-based campus bandwidth monitoring and network usage analytics system for **Davao del Sur State College**, built for the ICT Office. It watches routers and links, records traffic, raises alerts, produces reports, and shows office-level network activity, without inventing data it cannot measure.
@@ -47,6 +51,7 @@ A web-based campus bandwidth monitoring and network usage analytics system for *
 
 ## Technology stack
 
+<<<<<<< HEAD
 | Layer | Technology |
 | --- | --- |
 | Backend | Laravel 13, PHP 8.5+ |
@@ -55,6 +60,16 @@ A web-based campus bandwidth monitoring and network usage analytics system for *
 | Build | Vite |
 | Monitoring | SNMP (PHP `snmp` extension), ICMP ping, optional MikroTik RouterOS API |
 | Auth | Laravel starter kit authentication, queues and scheduler |
+=======
+| Layer      | Technology                                                                    |
+| ---------- | ----------------------------------------------------------------------------- |
+| Backend    | Laravel 13, PHP 8.3+                                                          |
+| Frontend   | React 19, TypeScript, Inertia.js, Tailwind CSS 4, shadcn/ui, Lucide, Recharts |
+| Database   | MySQL (SQLite for the test suite)                                             |
+| Build      | Vite                                                                          |
+| Monitoring | SNMP (PHP `snmp` extension), ICMP ping, optional MikroTik RouterOS API      |
+| Auth       | Laravel starter kit authentication, queues and scheduler                      |
+>>>>>>> e5f0d7e (Add README)
 
 ## Getting started
 
@@ -109,6 +124,7 @@ Demo devices and samples are flagged as demo everywhere, are hidden as soon as a
 
 Main environment variables:
 
+<<<<<<< HEAD
 | Variable | Purpose |
 | --- | --- |
 | `BANDWIDTH_MONITORING_DRIVER` | Monitoring driver: `mock` (demo), `snmp`, or `mikrotik` |
@@ -116,6 +132,15 @@ Main environment variables:
 | `OFFICE_NETWORK_RETENTION_DAYS` | Default retention for collected records (default `90`) |
 | `OFFICE_NETWORK_DOMAIN_BUCKET` | Domain activity is stored per client, domain and this many seconds (default `300`) |
 | `OFFICE_NETWORK_MAX_REPORT_DAYS` | Longest range a Website Activity report or export may cover (default `90`) |
+=======
+| Variable                            | Purpose                                                                              |
+| ----------------------------------- | ------------------------------------------------------------------------------------ |
+| `BANDWIDTH_MONITORING_DRIVER`     | Monitoring driver: `mock` (demo), `snmp`, or `mikrotik`                        |
+| `OFFICE_NETWORK_ONLINE_THRESHOLD` | Seconds after which an unseen device counts as offline (default `180`)             |
+| `OFFICE_NETWORK_RETENTION_DAYS`   | Default retention for collected records (default `90`)                             |
+| `OFFICE_NETWORK_DOMAIN_BUCKET`    | Domain activity is stored per client, domain and this many seconds (default `300`) |
+| `OFFICE_NETWORK_MAX_REPORT_DAYS`  | Longest range a Website Activity report or export may cover (default `90`)         |
+>>>>>>> e5f0d7e (Add README)
 
 Verify the exact driver names in `config/campusnet.php`. The campus name, time zone (initially `Asia/Manila`), thresholds and polling interval are managed in **System Settings**.
 
@@ -123,6 +148,7 @@ Verify the exact driver names in `config/campusnet.php`. The campus name, time z
 
 Every route is protected by a Laravel gate (`can:` middleware). Hiding a sidebar item is a convenience, never the security boundary. Permissions are defined in `app/Enums/UserRole.php`.
 
+<<<<<<< HEAD
 | Capability | Read-Only Viewer | ICT / Network Administrator | Super Administrator |
 | --- | :---: | :---: | :---: |
 | Dashboard, devices, interfaces, traffic, alerts, reports (view) | yes | yes | yes |
@@ -147,6 +173,32 @@ Every route is protected by a Laravel gate (`can:` middleware). Hiding a sidebar
 | Registered devices | `/registered-devices` | Devices registered by MAC address and assigned to members |
 | Website Activity | `/website-activity` | Domain-level activity, top domains, per-office view, daily trend, CSV export |
 | Data sources | `/activity-sources` | Enable or disable each source, choose the router, set retention |
+=======
+| Capability                                                      | Read-Only Viewer | ICT / Network Administrator | Super Administrator |
+| --------------------------------------------------------------- | :--------------: | :-------------------------: | :-----------------: |
+| Dashboard, devices, interfaces, traffic, alerts, reports (view) |       yes       |             yes             |         yes         |
+| Manage devices, interfaces and alerts                           |        no        |             yes             |         yes         |
+| Export reports                                                  |        no        |             yes             |         yes         |
+| Office Connections (totals per office)                          |       yes       |             yes             |         yes         |
+| Connected Members, members and registered devices (view)        |        no        |             yes             |         yes         |
+| Website Activity (domain level, no member names)                |        no        |             yes             |         yes         |
+| Export connection and website reports                           |        no        |             yes             |         yes         |
+| Manage offices, members, devices and assignments                |        no        |             no             |         yes         |
+| See **who** visited a domain (member, device, IP)         |        no        |             no             |         yes         |
+| Manage data sources and retention                               |        no        |             no             |         yes         |
+| Users, audit logs, system settings, TV Display pairing          |        no        |             no             |         yes         |
+
+## Office Network Activity module
+
+| Page               | Route                   | Purpose                                                                      |
+| ------------------ | ----------------------- | ---------------------------------------------------------------------------- |
+| Office Connections | `/office-connections` | Devices per office, online and offline counts, last update                   |
+| Connected Members  | `/connected-members`  | Registered members with connected devices, unidentified devices, CSV export  |
+| Members            | `/members`            | The people of each office and their connection history                       |
+| Registered devices | `/registered-devices` | Devices registered by MAC address and assigned to members                    |
+| Website Activity   | `/website-activity`   | Domain-level activity, top domains, per-office view, daily trend, CSV export |
+| Data sources       | `/activity-sources`   | Enable or disable each source, choose the router, set retention              |
+>>>>>>> e5f0d7e (Add README)
 
 ### How people are identified
 
@@ -162,6 +214,7 @@ Phones often use a private (randomized) Wi-Fi address that changes per network, 
 
 CampusNet only shows what the network really records. SNMP alone cannot identify people or list websites.
 
+<<<<<<< HEAD
 | Source | Status | What it provides | Limits |
 | --- | --- | --- | --- |
 | SNMP interface counters | **Supported** | Interface traffic, link status, utilization | Per interface, not per user or website |
@@ -173,6 +226,19 @@ CampusNet only shows what the network really records. SNMP alone cannot identify
 | Proxy logs | Ingestion supports the type; no collector yet | Domain names and, where logged, bytes | Only for traffic that goes through the proxy |
 | Firewall logs | Ingestion supports the type; no collector yet | Connection metadata | Firewall logs contain IP addresses, not domain names |
 | RADIUS accounting, captive portal | Not implemented | Authenticated identity | Out of scope for now |
+=======
+| Source                                | Status                                        | What it provides                                                                                                               | Limits                                                                                         |
+| ------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| SNMP interface counters               | **Supported**                           | Interface traffic, link status, utilization                                                                                    | Per interface, not per user or website                                                         |
+| ICMP ping and subnet scan             | **Supported**                           | Router and internet reachability and latency, online device counts per office subnet                                           | Counts only; no identity                                                                       |
+| Mock driver                           | **Supported (demo)**                    | Clearly labelled simulated data                                                                                                | Never mixed with real data                                                                     |
+| Ingestion pipeline for domain records | **Supported**                           | Cleans domain names, attributes records to a registered device only when a connection session proves it, aggregates per bucket | Needs a collector to feed it                                                                   |
+| MikroTik DHCP lease collector         | **Planned**                             | MAC, IP and host name of connected devices, which identifies registered devices                                                | Identifies devices only; a device with a static IP will not appear                             |
+| MikroTik DNS query log collector      | **Planned**                             | Domain names asked by each client IP                                                                                           | A DNS lookup does not prove a site was visited; needs the router to be the clients' DNS server |
+| Proxy logs                            | Ingestion supports the type; no collector yet | Domain names and, where logged, bytes                                                                                          | Only for traffic that goes through the proxy                                                   |
+| Firewall logs                         | Ingestion supports the type; no collector yet | Connection metadata                                                                                                            | Firewall logs contain IP addresses, not domain names                                           |
+| RADIUS accounting, captive portal     | Not implemented                               | Authenticated identity                                                                                                         | Out of scope for now                                                                           |
+>>>>>>> e5f0d7e (Add README)
 
 **What CampusNet will not do**
 
@@ -202,12 +268,21 @@ This module handles network metadata about identifiable people. It is meant for 
 
 Run the scheduler in production (`php artisan schedule:work`, or a cron entry for `schedule:run`).
 
+<<<<<<< HEAD
 | Command | Purpose |
 | --- | --- |
 | `php artisan campusnet:poll` | Poll monitored devices through the active driver |
 | `php artisan campusnet:demo-data` | Create clearly simulated demo data (refused when a real driver is active) |
 | `php artisan network:ping` | Ping the router and the internet |
 | `php artisan network:scan` | Scan office subnets for online devices |
+=======
+| Command                              | Purpose                                                                              |
+| ------------------------------------ | ------------------------------------------------------------------------------------ |
+| `php artisan campusnet:poll`       | Poll monitored devices through the active driver                                     |
+| `php artisan campusnet:demo-data`  | Create clearly simulated demo data (refused when a real driver is active)            |
+| `php artisan network:ping`         | Ping the router and the internet                                                     |
+| `php artisan network:scan`         | Scan office subnets for online devices                                               |
+>>>>>>> e5f0d7e (Add README)
 | `php artisan office-network:prune` | Delete office network records past their retention period (`--dry-run` to preview) |
 
 Schedule the retention job by adding this to `routes/console.php`:
